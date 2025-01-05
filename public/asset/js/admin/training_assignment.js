@@ -1,34 +1,68 @@
 $(document).ready(function() {
+    // Get training code from the page
+    const trainingCode = $('#training-code').text();
+
     // Initialize DataTable for participants
     const participantsTable = $('#participantsTable').DataTable({
         processing: true,
-        serverSide: false,
-        data: [],
+        serverSide: true,
+        ajax: {
+            url: '/admin/trainings/' + trainingCode + '/participants/data',
+            error: function(xhr, error, thrown) {
+                console.error('DataTables error:', error, thrown);
+                alert('Error loading participants. Please try refreshing the page.');
+            }
+        },
         columns: [
-            { data: 'name' },
+            { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
+            { data: 'name', name: 'name' },
+            { data: 'type', name: 'type' },
             { 
-                data: 'role',
-                render: function(data) {
-                    return data === 'teacher' ? 'Teacher' : 'Facilitator';
-                }
-            },
-            { 
-                data: null,
+                data: 'attendance_status',
+                name: 'attendance_status',
                 render: function(data, type, row) {
-                    return row.role === 'teacher' ? row.education_level : row.specialization;
+                    if (type === 'display') {
+                        let statusText = data.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+                        return `<span class="status-badge status-${data}">${statusText}</span>`;
+                    }
+                    return data;
                 }
             },
-            { data: 'status' },
             {
-                data: null,
+                data: 'report_file',
+                name: 'report_file',
                 render: function(data, type, row) {
-                    const buttonClass = row.role === 'teacher' ? 'remove-teacher' : 'remove-facilitator';
-                    return `<button class="btn btn-sm btn-danger ${buttonClass}" data-id="${row.id}">
-                                <i class="fas fa-times"></i> Remove
-                            </button>`;
+                    if (type === 'display') {
+                        if (row.attendance_status === 'attended') {
+                            return `<a href="/admin/trainings/${trainingCode}/participants/${row.participant_id}/report" 
+                                      class="btn-download" 
+                                      title="Download Report">
+                                      <i class="fas fa-download"></i>
+                                   </a>`;
+                        }
+                        return '<span class="text-muted">-</span>';
+                    }
+                    return data;
                 }
             }
-        ]
+        ],
+        order: [[0, 'asc']],
+        responsive: true,
+        language: {
+            processing: '<div class="spinner-border text-primary" role="status"><span class="sr-only">Loading...</span></div>',
+            emptyTable: "No participants assigned to this training",
+            zeroRecords: "No matching records found"
+        },
+        drawCallback: function() {
+            $('.btn-download').css({
+                'min-width': '140px',
+                'font-weight': '500',
+                'border-radius': '4px',
+                'padding': '8px 16px',
+                'margin': '2px',
+                'white-space': 'nowrap'
+            });
+        }
     });
 
     // Initialize DataTables for participants modal
@@ -68,25 +102,6 @@ $(document).ready(function() {
         dropdownParent: $('#phase-modal')
     });
 
-    // Function to load available participants
-    function loadAvailableParticipants() {
-        const trainingCode = $('#training-code').text();
-        $.ajax({
-            url: `/admin/trainings/${trainingCode}/available-participants`,
-            method: 'GET',
-            success: function(response) {
-                participantsTable.clear().rows.add(response).draw();
-            },
-            error: function(xhr) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'Failed to load available participants'
-                });
-            }
-        });
-    }
-
     // Region change event
     $('#region').on('change', function() {
         let regionId = $(this).val();
@@ -100,7 +115,7 @@ $(document).ready(function() {
         if (regionId) {
             // Enable and load districts
             $.ajax({
-                url: `/api/districts/${regionId}`,
+                url: `/admin/api/districts/${regionId}`,
                 type: 'GET',
                 success: function(response) {
                     const districts = Array.isArray(response) ? response : (response.districts || []);
@@ -144,7 +159,7 @@ $(document).ready(function() {
         if (districtId) {
             // Enable and load wards
             $.ajax({
-                url: `/api/wards/${districtId}`,
+                url: `/admin/api/wards/${districtId}`,
                 type: 'GET',
                 success: function(response) {
                     const wards = Array.isArray(response) ? response : (response.wards || []);
@@ -315,7 +330,4 @@ $(document).ready(function() {
         $('.is-invalid').removeClass('is-invalid');
         $('.invalid-feedback').empty();
     });
-
-    // Initial load
-    loadAvailableParticipants();
 });

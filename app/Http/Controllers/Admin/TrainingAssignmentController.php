@@ -198,24 +198,19 @@ class TrainingAssignmentController extends Controller
     {
         $training = Training::where('training_code', $trainingCode)->firstOrFail();
 
-        $teachers = TrainingTeacher::where('training_id', $training->training_id)
-            ->with(['teacher.user'])
+        $teachers = DB::table('training_teachers')
+            ->join('teacher_profiles', 'training_teachers.teacher_id', '=', 'teacher_profiles.teacher_id')
+            ->join('users', 'teacher_profiles.user_id', '=', 'users.user_id')
+            ->where('training_teachers.training_id', $training->training_id)
+            ->select([
+                'users.name',
+                'training_teachers.teacher_id',
+                'training_teachers.attendance_status',
+                'training_teachers.report_file'
+            ])
             ->get();
 
-        return DataTables::of($teachers)
-            ->addColumn('name', function($record) {
-                return $record->teacher->user->name;
-            })
-            ->addColumn('education_level', function($record) {
-                return $record->teacher->education_level;
-            })
-            ->addColumn('status', function($record) {
-                return ucfirst($record->status);
-            })
-            ->addColumn('id', function($record) {
-                return $record->teacher_id;
-            })
-            ->make(true);
+        return response()->json(['data' => $teachers]);
     }
 
     /**
@@ -225,23 +220,60 @@ class TrainingAssignmentController extends Controller
     {
         $training = Training::where('training_code', $trainingCode)->firstOrFail();
 
-        $facilitators = TrainingFacilitator::where('training_id', $training->training_id)
-            ->with(['facilitator.user'])
+        $facilitators = DB::table('training_facilitators')
+            ->join('users', 'training_facilitators.user_id', '=', 'users.user_id')
+            ->where('training_facilitators.training_id', $training->training_id)
+            ->select([
+                'users.name',
+                'users.user_id',
+                'training_facilitators.attendance_status',
+                'training_facilitators.report_file'
+            ])
             ->get();
 
-        return DataTables::of($facilitators)
-            ->addColumn('name', function($record) {
-                return $record->facilitator->user->name;
-            })
-            ->addColumn('specialization', function($record) {
-                return $record->facilitator->specialization;
-            })
-            ->addColumn('status', function($record) {
-                return ucfirst($record->status);
-            })
-            ->addColumn('id', function($record) {
-                return $record->facilitator_id;
-            })
+        return response()->json(['data' => $facilitators]);
+    }
+
+    /**
+     * Get all participants (teachers and facilitators) for a specific training
+     */
+    public function getParticipants($trainingCode)
+    {
+        $training = Training::where('training_code', $trainingCode)->firstOrFail();
+
+        // Get teachers
+        $teachers = DB::table('training_teachers')
+            ->join('teacher_profiles', 'training_teachers.teacher_id', '=', 'teacher_profiles.teacher_id')
+            ->join('users', 'teacher_profiles.user_id', '=', 'users.user_id')
+            ->where('training_teachers.training_id', $training->training_id)
+            ->select([
+                'training_teachers.id',
+                'users.name',
+                DB::raw("'Teacher' as type"),
+                'training_teachers.attendance_status',
+                'training_teachers.report_file',
+                'training_teachers.teacher_id as participant_id'
+            ]);
+
+        // Get facilitators
+        $facilitators = DB::table('training_facilitators')
+            ->join('users', 'training_facilitators.user_id', '=', 'users.user_id')
+            ->where('training_facilitators.training_id', $training->training_id)
+            ->select([
+                'training_facilitators.id',
+                'users.name',
+                DB::raw("'CPD Facilitator' as type"),
+                'training_facilitators.attendance_status',
+                'training_facilitators.report_file',
+                'training_facilitators.user_id as participant_id'
+            ]);
+
+        // Combine queries
+        $query = $teachers->union($facilitators);
+
+        return DataTables::of($query)
+            ->addIndexColumn()
+            ->rawColumns(['attendance_status'])
             ->make(true);
     }
 
@@ -328,6 +360,84 @@ class TrainingAssignmentController extends Controller
                 'message' => 'Failed to create training phase: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Download participant's report
+     */
+    public function downloadReport($trainingCode, $participantId)
+    {
+        $training = Training::where('training_code', $trainingCode)->firstOrFail();
+        
+        // Try to find in teachers first
+        $participant = TrainingTeacher::where('training_id', $training->training_id)
+            ->where('teacher_id', $participantId)
+            ->first();
+            
+        if (!$participant) {
+            // If not found in teachers, look in facilitators
+            $participant = TrainingFacilitator::where('training_id', $training->training_id)
+                ->where('user_id', $participantId)
+                ->first();
+                
+            if (!$participant) {
+                abort(404, 'Participant not found');
+            }
+        }
+        
+        if ($participant->attendance_status !== 'attended' || !$participant->report_file) {
+            abort(404, 'No report file available for this participant');
+        }
+        
+        // Generate a dynamic PDF report
+        $headers = [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="training_report.pdf"',
+        ];
+        
+        // Create PDF using FPDF
+        $pdf = new \FPDF();
+        $pdf->AddPage();
+        
+        // Title
+        $pdf->SetFont('Arial', 'B', 16);
+        $pdf->Cell(0, 10, 'Training Participant Report', 0, 1, 'C');
+        $pdf->Ln(10);
+        
+        // Training Details
+        $pdf->SetFont('Arial', 'B', 12);
+        $pdf->Cell(50, 10, 'Training Code:', 0);
+        $pdf->SetFont('Arial', '', 12);
+        $pdf->Cell(0, 10, $trainingCode, 0, 1);
+        
+        $pdf->SetFont('Arial', 'B', 12);
+        $pdf->Cell(50, 10, 'Training Title:', 0);
+        $pdf->SetFont('Arial', '', 12);
+        $pdf->Cell(0, 10, $training->title, 0, 1);
+        
+        // Participant Details
+        $pdf->Ln(5);
+        $pdf->SetFont('Arial', 'B', 12);
+        $pdf->Cell(50, 10, 'Participant ID:', 0);
+        $pdf->SetFont('Arial', '', 12);
+        $pdf->Cell(0, 10, $participantId, 0, 1);
+        
+        $pdf->SetFont('Arial', 'B', 12);
+        $pdf->Cell(50, 10, 'Type:', 0);
+        $pdf->SetFont('Arial', '', 12);
+        $pdf->Cell(0, 10, $participant instanceof TrainingTeacher ? 'Teacher' : 'CPD Facilitator', 0, 1);
+        
+        $pdf->SetFont('Arial', 'B', 12);
+        $pdf->Cell(50, 10, 'Status:', 0);
+        $pdf->SetFont('Arial', '', 12);
+        $pdf->Cell(0, 10, ucfirst($participant->attendance_status), 0, 1);
+        
+        // Generated timestamp
+        $pdf->Ln(10);
+        $pdf->SetFont('Arial', 'I', 10);
+        $pdf->Cell(0, 10, 'Generated on: ' . now()->format('Y-m-d H:i:s'), 0, 1, 'R');
+        
+        return response($pdf->Output('S'), 200, $headers);
     }
 
     private function checkMoestAndGovernmentTraining($training)

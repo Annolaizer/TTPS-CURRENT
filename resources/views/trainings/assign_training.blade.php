@@ -11,6 +11,9 @@ use App\Helpers\StatusHelper;
     <link rel="stylesheet" href="{{ asset('asset/css/admin/admin_training.css') }}">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('plugins/datatables-bs4/css/dataTables.bootstrap4.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('plugins/datatables-responsive/css/responsive.bootstrap4.min.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
         .training-info-grid {
             display: grid;
@@ -40,6 +43,28 @@ use App\Helpers\StatusHelper;
             border-radius: 8px;
             padding: 1.5rem;
             margin-bottom: 1.5rem;
+        }
+        .badge {
+            padding: 0.5em 1em;
+            font-size: 0.875em;
+            text-transform: capitalize;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
+            transform: translateY(-1px);
+        }
+        .text-muted {
+            color: #6c757d !important;
+            font-style: italic;
+        }
+        .table td {
+            vertical-align: middle;
         }
     </style>
 @endpush
@@ -253,14 +278,14 @@ use App\Helpers\StatusHelper;
                         <h5 class="mb-0">Training Participants</h5>
                     </div>
                     <div class="card-body">
-                        <table id="participantsTable" class="table table-striped">
+                        <table id="participantsTable" class="table table-bordered table-striped">
                             <thead>
                                 <tr>
+                                    <th>SN</th>
                                     <th>Name</th>
-                                    <th>Role</th>
-                                    <th>Qualification</th>
+                                    <th>Type</th>
                                     <th>Status</th>
-                                    <th>Actions</th>
+                                    <th>Report</th>
                                 </tr>
                             </thead>
                             <tbody></tbody>
@@ -371,6 +396,9 @@ use App\Helpers\StatusHelper;
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="{{ asset('plugins/datatables/jquery.dataTables.min.js') }}"></script>
+    <script src="{{ asset('plugins/datatables-bs4/js/dataTables.bootstrap4.min.js') }}"></script>
+    <script src="{{ asset('plugins/datatables-responsive/js/dataTables.responsive.min.js') }}"></script>
     <script src="{{ asset('asset/js/admin/training_assignment.js') }}"></script>
     <script>
         // Initialize Select2 for static elements

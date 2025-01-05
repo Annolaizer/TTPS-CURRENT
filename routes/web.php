@@ -31,32 +31,21 @@ Route::get('/test/admin/dashboard/data', [DashboardController::class, 'apiData']
 Route::get('/api/districts/{region}', [LocationController::class, 'getDistricts'])->name('api.districts');
 Route::get('/api/wards/{district}', [LocationController::class, 'getWards'])->name('api.wards');
 
-// Admin Training routes
-Route::prefix('admin/trainings')->name('admin.trainings.')->group(function () {
-    Route::get('/', [TrainingController::class, 'index'])->name('index');
-    Route::get('/data', [TrainingController::class, 'getTrainings'])->name('data'); 
-    Route::post('/', [TrainingController::class, 'store'])->name('store');
-    
-    // Training verification routes (before the show route to avoid conflicts)
-    Route::put('/{trainingCode}/verify', [TrainingController::class, 'verify'])->name('verify');
-    Route::put('/{trainingCode}/reject', [TrainingController::class, 'reject'])->name('reject');
-    
-    Route::get('/{trainingCode}', [TrainingController::class, 'show'])->name('show');
-    Route::put('/{trainingCode}', [TrainingController::class, 'update'])->name('update');
-    Route::delete('/{trainingCode}', [TrainingController::class, 'destroy'])->name('destroy');
-    
+// Training routes
+Route::prefix('trainings')->middleware(['auth'])->name('trainings.')->group(function () {
     // Training Assignment routes
     Route::get('/{trainingCode}/assignment', [TrainingAssignmentController::class, 'show'])->name('assignment.show');
+    Route::get('/{trainingCode}/participants/data', [TrainingAssignmentController::class, 'getParticipants'])->name('participants.data');
+    Route::get('/{trainingCode}/participants/{participantId}/report', [TrainingAssignmentController::class, 'downloadReport'])->name('participants.report');
     Route::post('/{trainingCode}/update-phase', [TrainingAssignmentController::class, 'updatePhase'])->name('phase.update');
     
     Route::get('/{trainingCode}/available-teachers', [TrainingAssignmentController::class, 'getAvailableTeachers'])->name('teachers.available');
-    Route::get('/{trainingCode}/assigned-teachers', [TrainingAssignmentController::class, 'getAssignedTeachers'])->name('teachers.assigned');
-    Route::post('/{trainingCode}/assign-teachers', [TrainingAssignmentController::class, 'assignTeachers'])->name('teachers.assign');
-    Route::delete('/{trainingCode}/remove-teacher/{teacherId}', [TrainingAssignmentController::class, 'removeTeacher'])->name('teachers.remove');
-    
     Route::get('/{trainingCode}/available-facilitators', [TrainingAssignmentController::class, 'getAvailableFacilitators'])->name('facilitators.available');
-    Route::get('/{trainingCode}/assigned-facilitators', [TrainingAssignmentController::class, 'getAssignedFacilitators'])->name('facilitators.assigned');
+    
+    Route::post('/{trainingCode}/assign-teachers', [TrainingAssignmentController::class, 'assignTeachers'])->name('teachers.assign');
     Route::post('/{trainingCode}/assign-facilitators', [TrainingAssignmentController::class, 'assignFacilitators'])->name('facilitators.assign');
+    
+    Route::delete('/{trainingCode}/remove-teacher/{teacherId}', [TrainingAssignmentController::class, 'removeTeacher'])->name('teachers.remove');
     Route::delete('/{trainingCode}/remove-facilitator/{facilitatorId}', [TrainingAssignmentController::class, 'removeFacilitator'])->name('facilitators.remove');
 });
 
@@ -116,6 +105,43 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 });
 
+// Admin routes
+Route::prefix('admin')->name('admin.')->group(function () {
+    // Dashboard
+    Route::get('/dashboard', function () {
+        return view('admin.dashboard');
+    })->name('dashboard');
+
+    // Training routes
+    Route::prefix('trainings')->name('trainings.')->group(function () {
+        Route::get('/', [TrainingController::class, 'index'])->name('index');
+        Route::get('/data', [TrainingController::class, 'getTrainings'])->name('data');
+        Route::post('/', [TrainingController::class, 'store'])->name('store');
+        
+        // Training verification routes
+        Route::put('/{trainingCode}/verify', [TrainingController::class, 'verify'])->name('verify');
+        Route::put('/{trainingCode}/reject', [TrainingController::class, 'reject'])->name('reject');
+        
+        Route::get('/{trainingCode}', [TrainingController::class, 'show'])->name('show');
+        Route::put('/{trainingCode}', [TrainingController::class, 'update'])->name('update');
+        Route::delete('/{trainingCode}', [TrainingController::class, 'destroy'])->name('destroy');
+        
+        // Training Assignment routes
+        Route::get('/{trainingCode}/assignment', [TrainingAssignmentController::class, 'show'])->name('assignment');
+        Route::get('/{trainingCode}/participants/data', [TrainingAssignmentController::class, 'getParticipants'])->name('participants.data');
+        Route::get('/{trainingCode}/participants/{participantId}/report', [TrainingAssignmentController::class, 'downloadReport'])->name('participants.report');
+        
+        Route::get('/{trainingCode}/available-teachers', [TrainingAssignmentController::class, 'getAvailableTeachers'])->name('teachers.available');
+        Route::get('/{trainingCode}/available-facilitators', [TrainingAssignmentController::class, 'getAvailableFacilitators'])->name('facilitators.available');
+        
+        Route::post('/{trainingCode}/assign-teachers', [TrainingAssignmentController::class, 'assignTeachers'])->name('teachers.assign');
+        Route::post('/{trainingCode}/assign-facilitators', [TrainingAssignmentController::class, 'assignFacilitators'])->name('facilitators.assign');
+        
+        Route::delete('/{trainingCode}/remove-teacher/{teacherId}', [TrainingAssignmentController::class, 'removeTeacher'])->name('teachers.remove');
+        Route::delete('/{trainingCode}/remove-facilitator/{facilitatorId}', [TrainingAssignmentController::class, 'removeFacilitator'])->name('facilitators.remove');
+    });
+});
+
 // Debug route to catch unmatched routes
 Route::fallback(function () {
     return response()->json([
@@ -125,12 +151,3 @@ Route::fallback(function () {
         'method' => request()->method()
     ], 404);
 });
-
-// New routes for available teachers and facilitators
-Route::get('/trainings/{trainingCode}/assignment', [TrainingAssignmentController::class, 'show'])->name('trainings.assignment');
-Route::get('/trainings/{trainingCode}/available-teachers', [TrainingAssignmentController::class, 'getAvailableTeachers'])->name('trainings.available-teachers');
-Route::get('/trainings/{trainingCode}/available-facilitators', [TrainingAssignmentController::class, 'getAvailableFacilitators'])->name('trainings.available-facilitators');
-Route::post('/trainings/{trainingCode}/assign-teachers', [TrainingAssignmentController::class, 'assignTeachers'])->name('trainings.assign-teachers');
-Route::post('/trainings/{trainingCode}/assign-facilitators', [TrainingAssignmentController::class, 'assignFacilitators'])->name('trainings.assign-facilitators');
-Route::delete('/trainings/{trainingCode}/remove-teacher/{teacherId}', [TrainingAssignmentController::class, 'removeTeacher'])->name('trainings.remove-teacher');
-Route::delete('/trainings/{trainingCode}/remove-facilitator/{facilitatorId}', [TrainingAssignmentController::class, 'removeFacilitator'])->name('trainings.remove-facilitator');
