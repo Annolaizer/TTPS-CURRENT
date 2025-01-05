@@ -1,0 +1,245 @@
+ /* Main Content Wrapper */
+.main-content {
+    padding: 1rem;
+    margin-top: calc(var(--navbar-height) + 0.5rem);
+    min-height: calc(100vh - var(--navbar-height));
+    margin-left: 250px;
+    background-color: var(--light-bg);
+    transition: margin-left 0.3s ease;
+}
+
+/* Stat Cards */
+.stat-card {
+    position: relative;
+    padding: 1.5rem;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.stat-card-icon {
+    position: absolute;
+    right: -10px;
+    top: -10px;
+    font-size: 5rem;
+    opacity: 0.2;
+    transform: rotate(10deg);
+}
+
+.stat-card-info {
+    position: relative;
+    z-index: 1;
+}
+
+.stat-card-title {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+}
+
+.stat-card-number {
+    color: white;
+    font-size: 2rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.stat-card-progress {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.75rem;
+    margin-bottom: 0;
+}
+
+.stat-card-progress i {
+    margin-right: 0.25rem;
+}
+
+/* Gradient Backgrounds */
+.bg-gradient-primary {
+    background: linear-gradient(45deg, #4e73df, #224abe);
+}
+
+.bg-gradient-success {
+    background: linear-gradient(45deg, #1cc88a, #13855c);
+}
+
+.bg-gradient-warning {
+    background: linear-gradient(45deg, #f6c23e, #dda20a);
+}
+
+.bg-gradient-info {
+    background: linear-gradient(45deg, #36b9cc, #258391);
+}
+
+/* Hover Effects */
+.stat-card:hover .stat-card-icon {
+    transform: rotate(15deg) scale(1.1);
+    transition: transform 0.3s ease;
+}
+
+/* Info Cards */
+.info-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    height: 100%;
+    overflow: hidden;
+}
+
+.info-card-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.info-card-header i {
+    margin-right: 10px;
+    font-size: 1.2rem;
+}
+
+.info-card-header h5 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.info-card-body {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+/* Recent Activities Styles */
+.activity-item {
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-content {
+    margin-left: 5px;
+}
+
+.activity-title {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 3px;
+}
+
+.activity-content small {
+    font-size: 0.75rem;
+    color: #666;
+}
+
+.activity-details {
+    margin-top: 3px;
+}
+
+/* Scrollbar Styles */
+.info-card-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.info-card-body::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.info-card-body::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 3px;
+}
+
+.info-card-body::-webkit-scrollbar-thumb:hover {
+    background: #999;
+}
+
+/* Status Items */
+.status-item {
+    margin-bottom: 15px;
+}
+
+.status-item:last-child {
+    margin-bottom: 0;
+}
+
+.status-item span {
+    font-size: 0.85rem;
+    color: #555;
+}
+
+/* Quick Actions */
+.quick-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.quick-actions .btn {
+    text-align: left;
+    font-size: 0.85rem;
+    padding: 8px 12px;
+}
+
+.quick-actions .btn i {
+    width: 20px;
+    text-align: center;
+}
+
+/* Activity Items */
+.activity-item {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #eee;
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-content {
+    margin-left: 0.5rem;
+}
+
+.activity-title {
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+/* Action Buttons */
+.action-buttons .btn {
+    text-align: left;
+    padding: 0.75rem 1rem;
+}
+
+.action-buttons .btn i {
+    width: 20px;
+}
+
+/* Charts */
+.chart-container {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0,0,0,.1);
+    padding: 1rem;
+    margin-bottom: 1rem;
+    height: 300px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .main-content {
+        margin-left: 0;
+    }
+}

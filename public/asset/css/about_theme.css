@@ -1,0 +1,229 @@
+:root {
+    --primary-color: #009c95;
+    --secondary-color: #cc3344;
+    --hover-color: #008066;
+    --hover-dark: #006854;
+    --light-bg: #f8f8f8;
+    --navbar-height: 70px;
+    --topbar-height: 40px;
+    --container-max-width: 1200px;
+}
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    text-decoration: none;
+}
+body {
+    font-family: Arial, sans-serif;
+    background-color: var(--light-bg);
+    padding-top: calc(var(--navbar-height) + var(--topbar-height));
+}
+.top_bar {
+    width: 100%;
+    background-color: var(--secondary-color);
+    color: white;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    position: fixed;
+    top: 0;
+    z-index: 1030;
+    min-height: var(--topbar-height);
+    height: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.4;
+    text-align: center;
+}
+.navbar {
+    background-color: var(--primary-color);
+    transition: all 0.3s ease;
+    position: fixed;
+    width: 100%;
+    top: var(--topbar-actual-height, var(--topbar-height));
+    z-index: 1020;
+    min-height: var(--navbar-height);
+    padding: 0.625rem 0;
+    margin: 0;
+}
+.navbar.scrolled {
+    background-color: white !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.navbar.scrolled .nav-link {
+    color: #00b5ad !important;
+}
+.navbar.scrolled .navbar-brand .portal-name {
+    color: #00b5ad !important;
+}
+.nav-link, .navbar-brand {
+    transition: color 0.3s ease !important;
+}
+.nav-link {
+    cursor: pointer;
+    padding: 0.625rem 1rem !important;
+}
+.navbar-brand {
+    cursor: pointer;
+}
+.nav-link:hover {
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+.navbar.scrolled .nav-link:hover {
+    color: #008c86 !important;
+}
+.navbar-toggler {
+    border: 2px solid rgba(255,255,255,0.9) !important;
+    padding: 0.5rem;
+    margin-right: 10px;
+}
+.navbar-toggler:focus {
+    box-shadow: none;
+    outline: none;
+}
+.navbar-toggler-icon {
+    width: 24px;
+    height: 24px;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 1%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
+}
+.navbar-scrolled .navbar-toggler {
+    border-color: #00b5ad !important;
+}
+.navbar-scrolled .navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='%2300b5ad' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
+}
+.portal-name {
+    margin-top: 5px;
+    margin-left: 0.5rem;
+    font-weight: 500;
+}
+#logo {
+    width: 45px;
+    height: 45px;
+    object-fit: contain;
+}
+.about-content {
+    padding: 60px 0;
+    text-align: center;
+    background-color: white;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    margin: 30px auto;
+    max-width: 800px;
+    border-radius: 10px;
+}
+.about-text {
+    font-style: italic;
+    color: #333;
+    line-height: 1.8;
+    padding: 20px;
+    margin: 0 auto;
+    max-width: 600px;
+}
+/* Service Provider Cards Styling */
+.service-provider-card {
+    background: white;
+    border-radius: 50%;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    height: 90px;
+    width: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+    margin: 0 auto;
+}
+.service-provider-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+.service-provider-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    transition: transform 0.3s ease;
+    padding: 0.25rem;
+}
+.service-provider-card:hover img {
+    transform: scale(1.05);
+}
+.service-providers-section {
+    background-color: #6c757d0e;
+    padding: 2rem 0;
+    margin-top: 2rem;
+}
+@media (max-width: 768px) {
+    .service-providers-container {
+        width: 95% !important;
+    }
+    .service-provider-card {
+        height: 70px;
+        width: 70px;
+        padding: 0.35rem;
+    }
+    .service-provider-card img {
+        padding: 0.2rem;
+    }
+    .top_bar {
+        font-size: 0.75rem;
+        padding: 0.5rem 20px;
+        height: auto;
+        text-align: justify;
+        width: 100%;
+        hyphens: auto;
+        word-wrap: break-word;
+        position: fixed;
+        top: 0;
+    }
+    .about-content {
+        margin: 20px;
+        padding: 30px 15px;
+    }
+}
+.bg-pulp{
+    background-color: #272542;
+}
+a{
+    text-decoration: none;
+}
+.text-prime{
+    color: #00b5ad;
+}
+.scroll-to-top {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: var(--primary-color);
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    z-index: 1000;
+    border: none;
+    outline: none;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.scroll-to-top.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.scroll-to-top:hover {
+    background-color: var(--hover-color);
+    transform: translateY(-3px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+.scroll-to-top i {
+    font-size: 24px;
+}

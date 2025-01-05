@@ -1,0 +1,227 @@
+:root {
+    --primary-color: #009c95;
+    --secondary-color: #cc3344;
+    --hover-color: #007c77;
+    --hover-dark: #006c68;
+    --light-bg: #f8f8f8;
+}
+
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+body {
+    background-color: var(--light-bg);
+}
+
+.container-fluid {
+    min-height: 100%;
+}
+
+.row {
+    min-height: 100vh;
+}
+
+.bg-photo {
+    background-image: url("../images/login.jpg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    min-height: 100vh;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bg-photo::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.616);
+}
+
+.bg-photo h3 {
+    position: absolute;
+    top: 150px;
+    z-index: 1;
+    color: white;
+}
+
+.text-prime {
+    color: var(--primary-color);
+}
+
+.card-container {
+    width: 70%;
+    max-width: 400px;
+    min-width: 350px;
+    margin: auto;
+}
+
+.image-tab {
+    width: 100%;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 0;
+}
+
+.image-tab img {
+    margin-bottom: 10px;
+}
+
+.image-tab span {
+    color: var(--primary-color);
+    font-size: 1.2em;
+}
+
+.form-container {
+    background-color: transparent;
+    padding: 15px 0;
+}
+
+.form-floating {
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+.form-container input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: transparent;
+    height: 45px;
+    padding-top: 20px;
+}
+
+.form-container input:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0, 156, 149, 0.2);
+}
+
+.form-floating label {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px;
+    color: #666;
+    pointer-events: none;
+    transition: 0.2s ease all;
+}
+
+.form-floating input:focus ~ label,
+.form-floating input:not(:placeholder-shown) ~ label {
+    top: 1px;
+    font-size: 12px;
+    color: var(--primary-color);
+    background-color: var(--light-bg);
+    padding: 0 2px;
+    display: inline;
+    line-height: 1;
+    height: auto;
+    margin: 0;
+}
+
+.form-container input::placeholder {
+    color: transparent;
+}
+
+.password-field {
+    position: relative;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #666;
+    z-index: 1;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    margin-top: -6px;
+}
+
+.password-toggle:hover {
+    color: var(--primary-color);
+}
+
+.btn-text-prime {
+    width: 100%;
+    padding: 12px;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+}
+
+.btn-text-prime:hover {
+    background-color: var(--hover-color);
+    color: white;
+}
+
+.home-link {
+    text-decoration: none;
+    color: var(--primary-color);
+    margin-top: 1rem;
+    display: inline-block;
+}
+
+.home-link:hover {
+    color: var(--hover-color);
+}
+
+.forgot-password {
+    text-align: center;
+    margin-top: 15px;
+}
+
+.forgot-password a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.forgot-password a:hover {
+    text-decoration: underline;
+    color: var(--hover-color);
+}
+
+.back-link {
+    display: block;
+    text-align: center;
+    margin-top: 15px;
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.back-link:hover {
+    color: var(--hover-color);
+}
+
+@media screen and (max-width: 768px) {
+    .bg-photo {
+        display: none;
+    }
+    .col-md-8 {
+        width: 100%;
+    }
+    .card-container {
+        width: 90%;
+        min-width: auto;
+        margin: 20px auto;
+    }
+}
