@@ -3541,3 +3541,15 @@
 #9 /Users/mac/Desktop/TTPS Back-end/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php(23): require_once('/Users/mac/Desk...')
 #10 {main}
 "} 
+[2025-01-05 13:55:40] local.INFO: Getting districts for region {"region_id":"29"} 
+[2025-01-05 13:55:40] local.INFO: Districts fetched {"region_id":"29","count":2} 
+[2025-01-05 13:55:40] local.INFO: Getting wards for district {"district_id":"149"} 
+[2025-01-05 13:55:40] local.INFO: Wards fetched {"district_id":"149","count":5} 
+[2025-01-05 13:56:09] local.INFO: Getting districts for region {"region_id":"10"} 
+[2025-01-05 13:56:09] local.INFO: Districts fetched {"region_id":"10","count":6} 
+[2025-01-05 13:56:11] local.INFO: Getting wards for district {"district_id":"57"} 
+[2025-01-05 13:56:11] local.INFO: Wards fetched {"district_id":"57","count":5} 
+[2025-01-05 13:56:37] local.INFO: Getting districts for region {"region_id":"6"} 
+[2025-01-05 13:56:37] local.INFO: Districts fetched {"region_id":"6","count":8} 
+[2025-01-05 13:56:37] local.INFO: Getting wards for district {"district_id":"28"} 
+[2025-01-05 13:56:37] local.INFO: Wards fetched {"district_id":"28","count":5} 
