@@ -55,10 +55,12 @@ $(document).ready(function() {
         },
         drawCallback: function() {
             $('.btn-download').css({
-                'min-width': '140px',
+                'min-width': '100px',
                 'font-weight': '500',
+                'background-color': '#009c95',
+                'color': '#fff',
                 'border-radius': '4px',
-                'padding': '8px 16px',
+                'padding': '8px 10px',
                 'margin': '2px',
                 'white-space': 'nowrap'
             });
@@ -115,7 +117,7 @@ $(document).ready(function() {
         if (regionId) {
             // Enable and load districts
             $.ajax({
-                url: `/admin/api/districts/${regionId}`,
+                url: `/api/districts/${regionId}`, 
                 type: 'GET',
                 success: function(response) {
                     const districts = Array.isArray(response) ? response : (response.districts || []);
@@ -159,7 +161,7 @@ $(document).ready(function() {
         if (districtId) {
             // Enable and load wards
             $.ajax({
-                url: `/admin/api/wards/${districtId}`,
+                url: `/api/wards/${districtId}`,
                 type: 'GET',
                 success: function(response) {
                     const wards = Array.isArray(response) ? response : (response.wards || []);
@@ -311,6 +313,214 @@ $(document).ready(function() {
                         });
                     }
                 });
+            }
+        });
+    });
+
+    // Add phase modal open event
+    $('#addPhaseBtn').on('click', function() {
+        // Get current training data from the page
+        const trainingCode = $('#training-code').text().trim();
+        const title = $('#training-title').text().trim();
+        const currentPhase = parseInt($('#training-phase').text().trim());
+
+        // Initialize Select2 for all dropdowns
+        $('#phase-modal select').each(function() {
+            if (!$(this).data('select2')) {
+                $(this).select2({
+                    width: '100%',
+                    dropdownParent: $('#phase-modal')
+                });
+            }
+        });
+
+        // Set organization (readonly)
+        const orgSelect = $('select[name="organization_id"]');
+        orgSelect.val($('#training-org').data('org-id')).trigger('change').prop('disabled', true);
+        
+        // Load training details to get education level and subjects
+        $.ajax({
+            url: `/admin/trainings/${trainingCode}`,
+            type: 'GET',
+            success: function(response) {
+                if (!response.training) {
+                    Swal.fire('Error', 'Failed to load training details', 'error');
+                    return;
+                }
+
+                // Set education level (readonly)
+                const educSelect = $('#education_level');
+                educSelect.val(response.training.education_level).prop('disabled', true);
+                
+                // Load subjects based on education level
+                $.ajax({
+                    url: `/admin/subjects/${response.training.education_level}`,
+                    type: 'GET',
+                    success: function(subjectResponse) {
+                        const subjectsSelect = $('select[name="subjects[]"]');
+                        subjectsSelect.empty();
+                        
+                        if (subjectResponse.subjects && subjectResponse.subjects.length > 0) {
+                            subjectResponse.subjects.forEach(function(subject) {
+                                const option = new Option(subject.subject_name, subject.subject_id, false, false);
+                                subjectsSelect.append(option);
+                            });
+                            subjectsSelect.prop('disabled', false).trigger('change');
+                        } else {
+                            console.error('No subjects found for education level:', response.training.education_level);
+                            Swal.fire('Warning', 'No subjects found for this education level', 'warning');
+                        }
+                    },
+                    error: function(xhr) {
+                        console.error('Subject loading error:', xhr);
+                        Swal.fire('Error', 'Failed to load subjects. Please try again.', 'error');
+                    }
+                });
+            },
+            error: function(xhr) {
+                console.error('Training loading error:', xhr);
+                Swal.fire('Error', 'Failed to load training details. Please try again.', 'error');
+            }
+        });
+        
+        // Set title (readonly)
+        $('input[name="title"]').val(title + ' - Phase ' + (currentPhase + 1)).prop('disabled', true);
+        
+        // Set next phase as default (can be changed)
+        const phaseSelect = $('select[name="training_phase"]');
+        if (currentPhase < 10) {
+            phaseSelect.val(currentPhase + 1).trigger('change');
+        }
+            
+        // Add hidden input for parent training code
+        if (!$('input[name="parent_training_code"]').length) {
+            $('<input>').attr({
+                type: 'hidden',
+                name: 'parent_training_code',
+                value: trainingCode
+            }).appendTo('#phase-form');
+        }
+
+        // Show the modal
+        $('#phase-modal').modal('show');
+    });
+
+    // Calculate duration when dates change
+    function calculateDuration() {
+        const startDate = $('input[name="start_date"]').val();
+        const endDate = $('input[name="end_date"]').val();
+        const durationInput = $('input[name="duration_days"]');
+        
+        if (startDate && endDate) {
+            const start = moment(startDate);
+            const end = moment(endDate);
+            
+            if (end.isBefore(start)) {
+                $('input[name="end_date"]').addClass('is-invalid');
+                $('input[name="end_date"]').next('.invalid-feedback').text('End date cannot be before start date');
+                durationInput.val('');
+            } else {
+                $('input[name="end_date"]').removeClass('is-invalid');
+                $('input[name="end_date"]').next('.invalid-feedback').text('');
+                // Add 1 to include both start and end dates
+                const duration = end.diff(start, 'days') + 1;
+                durationInput.val(duration);
+            }
+        }
+    }
+
+    // Attach date change handlers
+    $('input[name="start_date"], input[name="end_date"]').on('change', function() {
+        calculateDuration();
+    });
+
+    // Reset form when modal is closed
+    $('#phase-modal').on('hidden.bs.modal', function() {
+        const form = $('#phase-form');
+        form.trigger('reset');
+        form.find('.is-invalid').removeClass('is-invalid');
+        
+        // Reset and enable all selects except organization and education level
+        const selects = $('select[name="training_phase"], select[name="subjects[]"]');
+        selects.prop('disabled', false);
+        
+        // Keep organization and education level disabled
+        $('select[name="organization_id"], select[name="education_level"]').prop('disabled', true);
+        
+        // Destroy and reinitialize Select2
+        selects.each(function() {
+            if ($(this).data('select2')) {
+                $(this).select2('destroy');
+            }
+        });
+        
+        // Reinitialize Select2
+        selects.select2({
+            width: '100%',
+            dropdownParent: $('#phase-modal')
+        });
+    });
+
+    // Handle phase form submission
+    $('#phase-form').on('submit', function(e) {
+        e.preventDefault();
+        
+        const form = $(this);
+        const formData = new FormData(form[0]);
+        
+        // Validate required fields
+        let isValid = true;
+        form.find('[required]').each(function() {
+            if (!$(this).val()) {
+                $(this).addClass('is-invalid');
+                $(this).next('.invalid-feedback').text('This field is required');
+                isValid = false;
+            } else {
+                $(this).removeClass('is-invalid');
+            }
+        });
+        
+        if (!isValid) {
+            Swal.fire('Error', 'Please fill in all required fields', 'error');
+            return;
+        }
+        
+        // Show loading state
+        Swal.fire({
+            title: 'Creating New Phase',
+            text: 'Please wait...',
+            allowOutsideClick: false,
+            showConfirmButton: false,
+            willOpen: () => {
+                Swal.showLoading();
+            }
+        });
+        
+        // Submit form
+        $.ajax({
+            url: '/admin/trainings/phases',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success!',
+                    text: 'New training phase has been created successfully',
+                    showConfirmButton: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.reload();
+                    }
+                });
+            },
+            error: function(xhr) {
+                let errorMessage = 'Failed to create new phase. ';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage += xhr.responseJSON.message;
+                }
+                Swal.fire('Error', errorMessage, 'error');
             }
         });
     });

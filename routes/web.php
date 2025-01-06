@@ -123,7 +123,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::put('/{trainingCode}/reject', [TrainingController::class, 'reject'])->name('reject');
         
         Route::get('/{trainingCode}', [TrainingController::class, 'show'])->name('show');
-        Route::put('/{trainingCode}', [TrainingController::class, 'update'])->name('update');
+        Route::put('/{trainingCode}/update', [TrainingController::class, 'update'])->name('update');
         Route::delete('/{trainingCode}', [TrainingController::class, 'destroy'])->name('destroy');
         
         // Training Assignment routes
@@ -141,6 +141,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::delete('/{trainingCode}/remove-facilitator/{facilitatorId}', [TrainingAssignmentController::class, 'removeFacilitator'])->name('facilitators.remove');
     });
 });
+
 
 // Debug route to catch unmatched routes
 Route::fallback(function () {

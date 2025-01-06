@@ -12,6 +12,8 @@ use App\Models\Ward;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Arr;
 
 class TrainingController extends Controller
 {
@@ -214,7 +216,9 @@ class TrainingController extends Controller
             ]);
 
             // Generate training code
-            $trainingCode = 'TRN-' . date('Y') . '-' . str_pad(Training::count() + 1, 4, '0', STR_PAD_LEFT);
+            $maxId = Training::max('training_id') ?? 0;
+            $nextId = $maxId + 1;
+            $trainingCode = 'TRN-' . date('Y') . '-' . str_pad($nextId, 4, '0', STR_PAD_LEFT);
 
             // Create training
             $training = Training::create([
@@ -276,74 +280,75 @@ class TrainingController extends Controller
         try {
             $training = Training::where('training_code', $trainingCode)->firstOrFail();
 
-            $validated = $request->validate([
+            // Parse raw input for multipart/form-data
+            $rawInput = file_get_contents('php://input');
+            $boundary = substr($rawInput, 0, strpos($rawInput, "\r\n"));
+            $parts = array_slice(explode($boundary, $rawInput), 1, -1);
+            $formData = [];
+
+            foreach ($parts as $part) {
+                if (empty($part)) continue;
+                
+                // Extract field name and value
+                if (preg_match('/name=\"([^\"]*)\".*(?:\r\n|\n|\r){4}(.*)(?:\r\n|\n|\r)/U', $part, $matches)) {
+                    $name = $matches[1];
+                    $value = trim($matches[2]);
+                    
+                    // Handle array fields like subjects[]
+                    if (strpos($name, '[') !== false) {
+                        $name = str_replace(['[', ']'], ['.', ''], $name);
+                        Arr::set($formData, $name, $value);
+                    } else {
+                        $formData[$name] = $value;
+                    }
+                }
+            }
+
+            // Log parsed form data
+            \Log::info('Training Update Form Data:', $formData);
+
+            // Validate the data
+            $validated = Validator::make($formData, [
                 'title' => 'required|string|max:255',
                 'organization_id' => 'required|exists:organizations,organization_id',
                 'education_level' => 'required|string',
                 'training_phase' => 'required|integer',
-                'max_participants' => 'required|integer|min:1',
+                'max_participants' => 'required|integer',
                 'description' => 'required|string',
                 'start_date' => 'required|date',
                 'end_date' => 'required|date|after_or_equal:start_date',
-                'start_time' => 'required|date_format:H:i',
-                'duration_days' => 'required|integer|min:1',
+                'start_time' => 'required',
+                'duration_days' => 'required|integer',
                 'region_id' => 'required|exists:regions,region_id',
                 'district_id' => 'required|exists:districts,district_id',
                 'ward_id' => 'required|exists:wards,ward_id',
-                'venue_name' => 'required|string|max:255',
+                'venue_name' => 'required|string',
                 'subjects' => 'required|array',
                 'subjects.*' => 'exists:subjects,subject_id'
-            ]);
+            ])->validate();
 
-            // Update training
-            $training->update([
-                'title' => $validated['title'],
-                'organization_id' => $validated['organization_id'],
-                'education_level' => $validated['education_level'],
-                'training_phase' => $validated['training_phase'],
-                'max_participants' => $validated['max_participants'],
-                'description' => $validated['description'],
-                'start_date' => $validated['start_date'],
-                'end_date' => $validated['end_date'],
-                'start_time' => $validated['start_time'],
-                'duration_days' => $validated['duration_days'],
-                'region_id' => $validated['region_id'],
-                'district_id' => $validated['district_id'],
-                'ward_id' => $validated['ward_id'],
-                'venue_name' => $validated['venue_name']
-            ]);
+            // Update the training
+            $training->update($validated);
 
             // Sync subjects
-            $training->subjects()->sync($validated['subjects']);
+            if (isset($formData['subjects'])) {
+                $subjects = is_array($formData['subjects']) ? $formData['subjects'] : [$formData['subjects']];
+                $training->subjects()->sync($subjects);
+            }
 
-            // Load relationships for response
-            $training->load(['organization', 'subjects']);
-
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Training updated successfully',
-                'training' => $training
+            return response()->json(['message' => 'Training updated successfully']);
+        } catch (ValidationException $e) {
+            \Log::error('Training validation failed:', [
+                'errors' => $e->errors(),
+                'data' => $formData ?? null
             ]);
-
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Training not found'
-            ], 404);
-
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Validation failed',
-                'errors' => $e->errors()
-            ], 422);
-
+            return response()->json(['errors' => $e->errors()], 422);
         } catch (\Exception $e) {
-            \Log::error('Training update failed: ' . $e->getMessage());
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Failed to update training: ' . $e->getMessage()
-            ], 500);
+            \Log::error('Training update failed:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json(['message' => 'Failed to update training'], 500);
         }
     }
 

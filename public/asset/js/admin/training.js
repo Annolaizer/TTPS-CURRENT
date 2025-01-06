@@ -323,79 +323,67 @@ $(document).ready(function() {
 
         const training = response.training;
         
+        // Set modal title
         $('#training-modal .modal-title').text('Edit Training');
+        
+        // Create hidden input for training code if it doesn't exist
+        if (!$('input[name="training_code"]').length) {
+            $('<input>').attr({
+                type: 'hidden',
+                name: 'training_code'
+            }).appendTo('#training-form');
+        }
+        
+        // Set training code
+        $('input[name="training_code"]').val(training.training_code);
         
         // Basic info
         $('input[name="title"]').val(training.title);
         $('select[name="organization_id"]').val(training.organization_id).trigger('change');
-        $('select[name="education_level"]').val(training.education_level);
-        $('select[name="training_phase"]').val(training.training_phase);
+        $('select[name="education_level"]').val(training.education_level).trigger('change');
+        $('select[name="training_phase"]').val(training.training_phase).trigger('change');
         $('input[name="max_participants"]').val(training.max_participants);
         $('textarea[name="description"]').val(training.description);
-        $('input[name="start_date"]').val(training.start_date);
-        $('input[name="end_date"]').val(training.end_date);
-        $('input[name="start_time"]').val(training.start_time);
-        $('input[name="duration_days"]').val(training.duration_days);
-
-        // Location cascade
-        try {
-            // Load and select region
-            $('#region').val(training.region_id).trigger('change');
-            
-            // Wait for districts to load
-            await new Promise(resolve => {
-                const checkDistricts = setInterval(() => {
-                    if ($('#district option').length > 1) {
-                        clearInterval(checkDistricts);
-                        resolve();
-                    }
-                }, 100);
-                
-                // Timeout after 5 seconds
-                setTimeout(() => {
-                    clearInterval(checkDistricts);
-                    resolve();
-                }, 5000);
-            });
-            
-            // Select district
-            $('#district').val(training.district_id).trigger('change');
-            
-            // Wait for wards to load
-            await new Promise(resolve => {
-                const checkWards = setInterval(() => {
-                    if ($('#ward option').length > 1) {
-                        clearInterval(checkWards);
-                        resolve();
-                    }
-                }, 100);
-                
-                // Timeout after 5 seconds
-                setTimeout(() => {
-                    clearInterval(checkWards);
-                    resolve();
-                }, 5000);
-            });
-            
-            // Select ward
-            $('#ward').val(training.ward_id);
-            
-        } catch (error) {
-            console.error('Error loading location data:', error);
-        }
         
-        // Set venue
+        // Schedule
+        $('input[name="start_date"]').val(moment(training.start_date).format('YYYY-MM-DD'));
+        $('input[name="end_date"]').val(moment(training.end_date).format('YYYY-MM-DD'));
+        $('input[name="start_time"]').val(moment(training.start_time, 'HH:mm:ss').format('HH:mm'));
+        $('input[name="duration_days"]').val(training.duration_days);
+        
+        // Location
+        $('#region').val(training.region_id).trigger('change');
+        
+        // Wait for districts to load
+        await new Promise(resolve => {
+            const checkDistricts = setInterval(() => {
+                if (!$('#district').prop('disabled')) {
+                    clearInterval(checkDistricts);
+                    $('#district').val(training.district_id).trigger('change');
+                    resolve();
+                }
+            }, 100);
+        });
+        
+        // Wait for wards to load
+        await new Promise(resolve => {
+            const checkWards = setInterval(() => {
+                if (!$('#ward').prop('disabled')) {
+                    clearInterval(checkWards);
+                    $('#ward').val(training.ward_id).trigger('change');
+                    resolve();
+                }
+            }, 100);
+        });
+        
         $('input[name="venue_name"]').val(training.venue_name);
         
-        // Set subjects
-        if (training.subjects && training.subjects.length > 0) {
-            const subjectIds = training.subjects.map(s => s.subject_id);
-            $('select[name="subjects[]"]').val(subjectIds).trigger('change');
-        }
+        // Subjects
+        const subjectIds = training.subjects.map(subject => subject.subject_id);
+        $('select[name="subjects[]"]').val(subjectIds).trigger('change');
         
         // Show modal
-        const trainingModal = new bootstrap.Modal(document.getElementById('training-modal'));
-        trainingModal.show();
+        $('#training-modal').modal('show');
     }
 
     // View button click
@@ -467,7 +455,7 @@ $(document).ready(function() {
                             }).then(() => {
                                 // Reload table data without resetting pagination
                                 if (table) {
-                                    table.ajax.reload(null, false);
+                                    table.ajax.reload();
                                 } else {
                                     window.location.reload();
                                 }
@@ -499,70 +487,113 @@ $(document).ready(function() {
         });
     });
 
-    // Form submit handler
+    // Handle form submission
     $('#training-form').on('submit', function(e) {
         e.preventDefault();
         
-        // Validate dates
-        const startDate = moment($('input[name="start_date"]').val());
-        const endDate = moment($('input[name="end_date"]').val());
-        if (endDate.isBefore(startDate)) {
-            Swal.fire('Error', 'End date cannot be before start date', 'error');
+        // Remove previous validation errors
+        $('.is-invalid').removeClass('is-invalid');
+        $('.invalid-feedback').text('');
+        
+        // Create form data manually instead of using FormData constructor
+        const formData = new FormData();
+        
+        // Add CSRF token and method
+        formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
+        
+        // Get all form values
+        const formValues = {
+            title: $('input[name="title"]').val(),
+            organization_id: $('select[name="organization_id"]').val(),
+            education_level: $('select[name="education_level"]').val(),
+            training_phase: $('select[name="training_phase"]').val(),
+            max_participants: $('input[name="max_participants"]').val(),
+            description: $('textarea[name="description"]').val(),
+            venue_name: $('input[name="venue_name"]').val(),
+            duration_days: $('input[name="duration_days"]').val(),
+            region_id: $('select[name="region_id"]').val(),
+            district_id: $('select[name="district_id"]').val(),
+            ward_id: $('select[name="ward_id"]').val(),
+            start_date: $('input[name="start_date"]').val(),
+            end_date: $('input[name="end_date"]').val(),
+            start_time: $('input[name="start_time"]').val()
+        };
+        
+        // Format dates after validation
+        if (formValues.start_date) {
+            formValues.start_date = moment(formValues.start_date, 'YYYY-MM-DD').format('YYYY-MM-DD');
+        }
+        if (formValues.end_date) {
+            formValues.end_date = moment(formValues.end_date, 'YYYY-MM-DD').format('YYYY-MM-DD');
+        }
+        if (formValues.start_time) {
+            formValues.start_time = moment(formValues.start_time, 'HH:mm').format('HH:mm');
+        }
+        
+        // Debug log raw values
+        console.log('Raw Form Values:', {
+            ...formValues,
+            subjects: $('select[name="subjects[]"]').val()
+        });
+        
+        // Validate required fields
+        let hasError = false;
+        Object.entries(formValues).forEach(([key, value]) => {
+            const field = $(`[name="${key}"]`);
+            if (field.prop('required') && (!value || (Array.isArray(value) && value.length === 0))) {
+                field.addClass('is-invalid');
+                field.next('.invalid-feedback').text(`The ${key.replace('_', ' ')} field is required`);
+                hasError = true;
+            }
+        });
+        
+        if (hasError) {
             return;
         }
         
-        // Validate time
-        const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
-        const time = $('input[name="start_time"]').val();
-        if (!timeRegex.test(time)) {
-            Swal.fire('Error', 'Please enter a valid time in HH:MM format', 'error');
-            return;
-        }
-
-        // Check if all required fields are filled
-        let isValid = true;
-        $(this).find('[required]').each(function() {
-            if (!$(this).val()) {
-                isValid = false;
-                $(this).addClass('is-invalid');
-                const fieldName = $(this).attr('name').replace('_', ' ');
-                $(this).next('.invalid-feedback').text(`${fieldName} is required`);
-            } else {
-                $(this).removeClass('is-invalid');
-                $(this).next('.invalid-feedback').text('');
+        // Add all form fields
+        Object.entries(formValues).forEach(([key, value]) => {
+            if (value) {
+                formData.append(key, value);
             }
         });
 
-        if (!isValid) {
-            Swal.fire('Error', 'Please fill in all required fields', 'error');
-            return;
-        }
-        
-        // Get form data
-        const formData = new FormData(this);
-        
-        // Add location IDs
-        formData.append('region_id', $('#region').val());
-        formData.append('district_id', $('#district').val());
-        formData.append('ward_id', $('#ward').val());
-
-        // Convert subjects array to proper format
+        // Add subjects array
         const subjects = $('select[name="subjects[]"]').val();
-        if (subjects) {
-            formData.delete('subjects[]');
+        if (subjects && subjects.length > 0) {
             subjects.forEach((subjectId, index) => {
                 formData.append(`subjects[${index}]`, subjectId);
             });
         }
 
         // Get training code if editing
-        const trainingCode = $(this).data('training-code');
+        const trainingCode = $('input[name="training_code"]').val();
         const isEditing = !!trainingCode;
         
-        // Set up request
-        const url = isEditing ? `/admin/trainings/${trainingCode}` : '/admin/trainings';
-        const method = isEditing ? 'PUT' : 'POST';
+        // Set up request URL and method
+        let url = '/admin/trainings';
+        let method = 'POST';
         
+        if (isEditing) {
+            url = `/admin/trainings/${trainingCode}/update`;
+            method = 'PUT';
+            formData.append('_method', 'PUT');
+            console.log(trainingCode, 'Editing training:', url);
+        }
+        
+        // Debug log final form data
+        const formDataObj = {};
+        for (let [key, value] of formData.entries()) {
+            formDataObj[key] = value;
+        }
+        console.log('Final Form Data:', {
+            isEditing,
+            method,
+            url,
+            trainingCode,
+            formData: formDataObj
+        });
+
         // Show loading
         Swal.fire({
             title: 'Processing...',
@@ -574,63 +605,104 @@ $(document).ready(function() {
                 Swal.showLoading();
             }
         });
-        
+
+        // Send request
         $.ajax({
             url: url,
-            type: method,
+            method: method,
             data: formData,
             processData: false,
             contentType: false,
+            headers: {
+                'X-HTTP-Method-Override': method
+            },
             success: function(response) {
                 Swal.fire({
                     icon: 'success',
                     title: 'Success!',
-                    text: `Training has been ${isEditing ? 'updated' : 'added'} successfully.`
+                    text: isEditing ? 'Training updated successfully!' : 'Training added successfully!',
+                    timer: 1500,
+                    showConfirmButton: false
                 }).then(() => {
-                    window.location.reload();
+                    // Refresh table and close modal
+                    $('#trainings-table').DataTable().ajax.reload();
+                    $('#training-modal').modal('hide');
                 });
             },
             error: function(xhr) {
-                console.error('Training submission error:', xhr); // Debug log
+                let errorMessage = 'An error occurred while processing your request.';
                 
-                let errorMessage = `Failed to ${isEditing ? 'update' : 'add'} training. `;
+                // Log the error details
+                console.error('AJAX Error:', {
+                    status: xhr.status,
+                    statusText: xhr.statusText,
+                    responseText: xhr.responseText,
+                    response: xhr.responseJSON
+                });
                 
                 if (xhr.status === 422) {
+                    // Handle validation errors
                     const errors = xhr.responseJSON.errors;
-                    Object.keys(errors).forEach(key => {
-                        const input = $(`[name="${key}"]`);
-                        input.addClass('is-invalid');
-                        input.next('.invalid-feedback').text(errors[key][0]);
-                        errorMessage += `\n${errors[key][0]}`;
+                    errorMessage = 'Validation failed:';
+                    Object.entries(errors).forEach(([field, messages]) => {
+                        // Add field error to message
+                        errorMessage += `\n- ${field}: ${messages.join(', ')}`;
+                        
+                        // Show error on form field
+                        const input = $(`[name="${field}"]`);
+                        if (input.length) {
+                            input.addClass('is-invalid');
+                            input.next('.invalid-feedback').text(messages[0]);
+                        }
+                        
+                        // Log the field value for debugging
+                        console.log(`Field ${field}:`, {
+                            value: formData.get(field),
+                            element: $(`[name="${field}"]`).length ? 'found' : 'not found',
+                            elementValue: $(`[name="${field}"]`).val()
+                        });
                     });
                 } else if (xhr.responseJSON && xhr.responseJSON.message) {
-                    errorMessage += xhr.responseJSON.message;
+                    errorMessage = xhr.responseJSON.message;
                 }
                 
-                Swal.fire(
-                    'Error!',
-                    errorMessage,
-                    'error'
-                );
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    html: errorMessage.replace(/\n/g, '<br>'),
+                    customClass: {
+                        content: 'text-start'
+                    }
+                });
             }
         });
     });
 
-    // Reset form when modal is hidden
-    $('#training-modal').on('hidden.bs.modal', function() {
-        const form = $('#training-form');
-        form.trigger('reset');
-        form.find('.is-invalid').removeClass('is-invalid');
-        form.find('.invalid-feedback').text('');
-        form.removeData('training-code');
-        $('#training-modal .modal-title').text('Add New Training');
+    // Reset form when modal is closed
+    $('#training-modal').on('hidden.bs.modal', function () {
+        // Reset form
+        $('#training-form')[0].reset();
         
-        // Reset all select2 dropdowns
-        $('#region').val('').trigger('change');
-        $('#district').val('').prop('disabled', true);
-        $('#ward').val('').prop('disabled', true);
+        // Reset select2 fields
+        $('select[name="organization_id"]').val(null).trigger('change');
+        $('select[name="education_level"]').val(null).trigger('change');
+        $('select[name="training_phase"]').val(null).trigger('change');
         $('select[name="subjects[]"]').val(null).trigger('change');
-        $('select[name="organization_id"]').val('').trigger('change');
+        
+        // Reset location fields
+        $('#region').val(null).trigger('change');
+        $('#district').prop('disabled', true).empty().append('<option value="">Select District</option>');
+        $('#ward').prop('disabled', true).empty().append('<option value="">Select Ward</option>');
+        
+        // Remove validation errors
+        $('.is-invalid').removeClass('is-invalid');
+        $('.invalid-feedback').text('');
+        
+        // Reset title
+        $('#training-modal .modal-title').text('Add Training');
+        
+        // Remove training code if exists
+        $('input[name="training_code"]').remove();
     });
 
     // Region change event

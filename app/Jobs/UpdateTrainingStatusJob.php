@@ -25,15 +25,15 @@ class UpdateTrainingStatusJob implements ShouldQueue
         try {
             $today = Carbon::now()->format('Y-m-d');
             
-            // Update trainings that should start today
-            // Only verified trainings can become ongoing, and only on their exact start date
+            // Update trainings that should start today or started in the past but are not yet ongoing
+            // Only verified trainings can become ongoing
             $startingTrainings = Training::where('status', 'verified')
                 ->whereNotNull('verified_at')
-                ->whereDate('start_date', '=', $today)  // Exactly today's date
+                ->whereDate('start_date', '<=', $today)  // Today or earlier
                 ->get();
 
             foreach ($startingTrainings as $training) {
-                Log::info("Marking training as ongoing (start date reached)", [
+                Log::info("Marking training as ongoing (start date reached or passed)", [
                     'training_code' => $training->training_code,
                     'start_date' => $training->start_date,
                     'end_date' => $training->end_date,
@@ -42,15 +42,15 @@ class UpdateTrainingStatusJob implements ShouldQueue
                 $training->update(['status' => 'ongoing']);
             }
 
-            // Update trainings that should end today
-            // Only ongoing trainings can be completed, and only on their exact end date
+            // Update trainings that should end today or have ended in the past
+            // Only ongoing trainings can be completed
             $completedTrainings = Training::where('status', 'ongoing')
                 ->whereNotNull('verified_at')
-                ->whereDate('end_date', '=', $today)  // Exactly today's date
+                ->whereDate('end_date', '<=', $today)  // Today or earlier
                 ->get();
 
             foreach ($completedTrainings as $training) {
-                Log::info("Marking training as completed (end date reached)", [
+                Log::info("Marking training as completed (end date reached or passed)", [
                     'training_code' => $training->training_code,
                     'start_date' => $training->start_date,
                     'end_date' => $training->end_date,

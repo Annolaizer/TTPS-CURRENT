@@ -84,7 +84,7 @@ use App\Helpers\StatusHelper;
             </div>
             <div class="info-card">
                 <h6>Organization</h6>
-                <p id="training-org">{{ $training->organization->name }}</p>
+                <p id="training-org" data-org-id="{{ $training->organization_id }}">{{ $training->organization->name }}</p>
             </div>
             <div class="info-card">
                 <h6>Education Level</h6>
@@ -136,7 +136,7 @@ use App\Helpers\StatusHelper;
                             <div class="row g-3 mb-3">
                                 <div class="col-md-12">
                                     <label class="form-label">Title <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" name="title" required>
+                                    <input type="text" class="form-control" name="title" required disabled>
                                     <div class="invalid-feedback"></div>
                                 </div>
                                 <div class="col-md-6">
@@ -153,12 +153,7 @@ use App\Helpers\StatusHelper;
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Education Level <span class="text-danger">*</span></label>
-                                    <select class="form-select" name="education_level" required>
-                                        <option value="">Select Level</option>
-                                        <option value="Primary Education">Primary Education</option>
-                                        <option value="Lower Secondary Education">Lower Secondary Education</option>
-                                        <option value="Higher Secondary Education">Higher Secondary Education</option>
-                                    </select>
+                                    <input type="text" class="form-select" name="education_level" required id="education_level">
                                     <div class="invalid-feedback"></div>
                                 </div>
                             </div>
@@ -173,6 +168,12 @@ use App\Helpers\StatusHelper;
                                         <option value="2">Phase 2</option>
                                         <option value="3">Phase 3</option>
                                         <option value="4">Phase 4</option>
+                                        <option value="5">Phase 5</option>
+                                        <option value="6">Phase 6</option>
+                                        <option value="7">Phase 7</option>
+                                        <option value="8">Phase 8</option>
+                                        <option value="9">Phase 9</option>
+                                        <option value="10">Phase 10</option>
                                     </select>
                                     <div class="invalid-feedback"></div>
                                 </div>
@@ -278,12 +279,12 @@ use App\Helpers\StatusHelper;
                         <h5 class="mb-0">Training Participants</h5>
                     </div>
                     <div class="card-body">
-                        <table id="participantsTable" class="table table-bordered table-striped">
+                        <table id="participantsTable" class="table table-striped">
                             <thead>
                                 <tr>
                                     <th>SN</th>
                                     <th>Name</th>
-                                    <th>Type</th>
+                                    <th>Participant Type</th>
                                     <th>Status</th>
                                     <th>Report</th>
                                 </tr>

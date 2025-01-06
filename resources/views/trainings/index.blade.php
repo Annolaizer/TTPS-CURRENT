@@ -193,7 +193,7 @@
                     <div class="row g-3 mb-3">
                         <div class="col-md-4">
                             <label class="form-label">Region <span class="text-danger">*</span></label>
-                            <select class="form-select select2" id="region" required>
+                            <select class="form-select select2" id="region" name="region_id" required>
                                 <option value="">Select Region</option>
                                 @if(isset($regions))
                                     @foreach($regions as $region)
@@ -205,7 +205,7 @@
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">District <span class="text-danger">*</span></label>
-                            <select class="form-select select2" id="district" required disabled>
+                            <select class="form-select select2" id="district" name="district_id" required disabled>
                                 <option value="">Select District</option>
                             </select>
                             <div class="invalid-feedback"></div>
@@ -373,6 +373,14 @@
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <script>
+        // Add CSRF token to all AJAX requests
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+    </script>
     <script src="{{ asset('asset/js/admin/training.js') }}"></script>
 @endpush
 @endsection
