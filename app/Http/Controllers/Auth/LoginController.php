@@ -73,6 +73,7 @@ class LoginController extends Controller
                 'admin', 'super_administrator' => route('test.admin.dashboard'),
                 'teacher' => route('teacher.dashboard'),
                 'cpd_facilitator' => route('cpd_facilitator.dashboard'),
+                'organization' => route('organization.dashboard'),
                 default => '/'
             };
 

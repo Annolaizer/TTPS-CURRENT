@@ -1,0 +1,356 @@
+:root {
+    --primary-color: #009c95;
+    --secondary-color: #cc3344;
+    --hover-color: #007c77;
+    --hover-dark: #006c68;
+    --light-bg: #f8f9fa;
+    --navbar-height: 70px;
+    --container-max-width: 1200px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    text-decoration: none;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--light-bg);
+    padding-top: var(--navbar-height);
+    margin: 0;
+    color: #333;
+}
+
+.navbar {
+    background-color: var(--primary-color);
+    position: fixed;
+    width: 100%;
+    top: 0;
+    z-index: 1020;
+    min-height: var(--navbar-height);
+    padding: 0.625rem 0;
+    margin: 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.navbar .container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1.5rem;
+}
+
+.navbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#logo {
+    height: 40px;
+    width: auto;
+}
+
+.portal-name {
+    color: white;
+    font-size: 1.2rem;
+    font-weight: 500;
+}
+
+.user-profile {
+    position: relative;
+}
+
+.profile-trigger {
+    background: transparent;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    height: 40px;
+    width: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 0;
+}
+
+.profile-trigger:hover {
+    background-color: var(--hover-color);
+    border-color: var(--hover-color);
+}
+
+.profile-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    width: 300px;
+    display: none;
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.profile-dropdown.show {
+    display: block;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.profile-info {
+    padding: 1rem;
+    background: #1e40af;  
+    color: white;
+    border-radius: 12px 12px 0 0;
+}
+
+.profile-info .welcome-text {
+    font-size: 0.75rem;
+    opacity: 0.8;
+    margin-bottom: 0.25rem;
+    font-weight: 500;
+}
+
+.profile-info .user-details {
+    margin-bottom: 0.5rem;
+}
+
+.profile-info .user-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.125rem;
+    color: white;
+    letter-spacing: 0.01em;
+}
+
+.profile-info .user-email {
+    font-size: 0.8rem;
+    opacity: 0.8;
+    margin-bottom: 0.5rem;
+}
+
+.profile-info .org-section {
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.profile-info .org-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.7;
+    margin-bottom: 0.125rem;
+}
+
+.profile-info .org-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: white;
+}
+
+.profile-avatar {
+    width: 36px;
+    height: 36px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.75rem;
+}
+
+.profile-avatar i {
+    font-size: 1.2rem;
+    color: white;
+}
+
+.profile-actions {
+    padding: 1.5rem;
+}
+
+.profile-actions a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #666;
+    text-decoration: none;
+    padding: 8px 0;
+    transition: color 0.3s ease;
+}
+
+.profile-actions a:hover {
+    color: var(--primary-color);
+}
+
+.dashboard-stats {
+    padding: 2rem 0;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    height: 100%;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    background: var(--primary-color);
+    color: white;
+}
+
+.stat-title {
+    font-size: 0.875rem;
+    color: #666;
+    margin-bottom: 0.5rem;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 0.25rem;
+}
+
+.stat-description {
+    font-size: 0.875rem;
+    color: #888;
+}
+
+/* DataTables style pagination */
+.datatable-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.datatable-pagination .pagination {
+    margin: 2px 0;
+    white-space: nowrap;
+}
+
+.datatable-pagination .paginate_button {
+    box-sizing: border-box;
+    display: inline-block;
+    min-width: 1.5em;
+    padding: 0.5em 1em;
+    margin-left: 2px;
+    text-align: center;
+    text-decoration: none !important;
+    cursor: pointer;
+    color: #333 !important;
+    border: 1px solid transparent;
+    border-radius: 2px;
+}
+
+.datatable-pagination .paginate_button a {
+    color: #333;
+    text-decoration: none;
+}
+
+.datatable-pagination .paginate_button.current {
+    background: linear-gradient(to bottom, #009c95 0%, #008c85 100%);
+    border: 1px solid #009c95;
+}
+
+.datatable-pagination .paginate_button.current a {
+    color: white !important;
+}
+
+.datatable-pagination .paginate_button:not(.current):hover {
+    background: linear-gradient(to bottom, #f9f9f9 0%, #e9e9e9 100%);
+    border: 1px solid #979797;
+}
+
+.datatable-pagination .paginate_button.disabled {
+    cursor: not-allowed;
+    color: #666 !important;
+    border: 1px solid transparent;
+    background: transparent;
+    box-shadow: none;
+}
+
+.datatable-pagination .paginate_button.disabled a {
+    color: #666 !important;
+    cursor: not-allowed;
+}
+
+/* Info text */
+.pagination-info {
+    color: #666;
+    font-size: 14px;
+    padding-top: 8px;
+}
+
+/* Entries selector */
+.form-select-sm {
+    padding: 4px 24px 4px 8px;
+    font-size: 14px;
+    border: 1px solid #aaa;
+    border-radius: 3px;
+    background-color: #fff;
+    cursor: pointer;
+    min-width: 70px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .datatable-pagination .paginate_button {
+        padding: 0.3em 0.8em;
+    }
+    
+    .pagination-info {
+        font-size: 13px;
+    }
+}
+
+.table-card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    padding: 1.5rem;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+    .navbar {
+        padding: 0.5rem 0;
+    }
+
+    .portal-name {
+        font-size: 1rem;
+    }
+
+    .stat-card {
+        margin-bottom: 1rem;
+    }
+}

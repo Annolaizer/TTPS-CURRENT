@@ -8,6 +8,8 @@ use App\Http\Controllers\Admin\TrainingAssignmentController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\Teacher\DashboardController as TeacherDashboardController;
 use App\Http\Controllers\CpdFacilitator\DashboardController as CpdFacilitatorDashboardController;
+use App\Http\Controllers\Organization\DashboardController as OrganizationDashboardController;
+use App\Http\Controllers\Organization\TrainingController as OrganizationTrainingController;
 
 Route::get('/', function () {
     return view('home.index');
@@ -127,6 +129,18 @@ Route::middleware('auth')->group(function () {
             Route::get('/profile', [CpdFacilitatorDashboardController::class, 'profile'])->name('profile');
             Route::get('/profile/setup', [CpdFacilitatorDashboardController::class, 'profileSetup'])->name('profile.setup');
         });
+
+    // Organization routes
+    Route::middleware(['auth', \App\Http\Middleware\OrganizationMiddleware::class])->prefix('organization')->name('organization.')->group(function () {
+        Route::get('/dashboard', [OrganizationDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/profile', [OrganizationDashboardController::class, 'profile'])->name('profile');
+        Route::get('/profile/setup', [OrganizationDashboardController::class, 'profileSetup'])->name('profile.setup');
+        Route::put('/profile/update', [OrganizationDashboardController::class, 'profileUpdate'])->name('profile.update');
+        
+        // Training routes
+        Route::get('/trainings', [OrganizationTrainingController::class, 'index'])->name('trainings');
+        Route::get('/trainings/{training}', [OrganizationTrainingController::class, 'show'])->name('trainings.show');
+    });
 });
 
 // Admin routes
