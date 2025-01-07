@@ -19,7 +19,8 @@ class TeacherProfileObserver
 
         try {
             \App\Models\Notification::create([
-                'user_id' => auth()->id() ?? '1', // Default to admin if no user is logged in
+                'notification_id' => \Illuminate\Support\Str::uuid(),
+                'user_id' => $teacherProfile->user_id,
                 'title' => 'New Teacher Registration',
                 'message' => "A new teacher has registered with ID: {$teacherProfile->user_id}",
                 'type' => 'system',

@@ -3,14 +3,32 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use App\Models\User;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
 class LoginController extends Controller
 {
+    public function showLoginForm($role)
+    {
+        $roles = ['teacher', 'organization', 'cpd_facilitator', 'admin', 'super_administrator'];
+
+        if (!in_array($role, $roles)) {
+            abort(404);
+        }
+
+        $displayRole = ucfirst(str_replace('_', ' ', $role));
+        
+        if ($role === 'admin' || $role === 'super_administrator') {
+            return view('auth.login.admin.index');
+        }
+
+        return view('auth.login.index', ['role' => $displayRole]);
+    }
+
     public function authenticate(Request $request)
     {
         try {
@@ -30,7 +48,7 @@ class LoginController extends Controller
             }
 
             // Check password
-            if (!Hash::check($request->password, $user->password_hash)) {
+            if (!Hash::check($request->password, $user->password)) {
                 throw ValidationException::withMessages([
                     'password' => ['Invalid password.'],
                 ]);
@@ -53,7 +71,8 @@ class LoginController extends Controller
             // Using test route for admin dashboard
             $redirectPath = match($user->role) {
                 'admin', 'super_administrator' => route('test.admin.dashboard'),
-                'teacher', 'organization', 'cpd_facilitator' => '/dashboard',
+                'teacher' => route('teacher.dashboard'),
+                'cpd_facilitator' => route('cpd_facilitator.dashboard'),
                 default => '/'
             };
 

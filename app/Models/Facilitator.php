@@ -16,7 +16,10 @@ class Facilitator extends Model
     protected $fillable = [
         'facilitator_id',
         'user_id',
-        'status'
+        'status',
+        'specialization',
+        'qualifications',
+        'registration_number'
     ];
 
     public function user()

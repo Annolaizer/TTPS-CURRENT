@@ -25,6 +25,8 @@ class Organization extends Model
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'type' => 'string',
+        'status' => 'string'
     ];
 
     public function user()

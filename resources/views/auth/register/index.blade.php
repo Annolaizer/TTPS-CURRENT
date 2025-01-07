@@ -33,7 +33,7 @@
                     <div class="form-container">
                         <form action="{{ route('register.store') }}" method="POST" autocomplete="off" novalidate>
                             @csrf
-                            <input type="hidden" name="role" value="{{ str_replace(' ', '_', strtolower($role)) }}">
+                            <input type="hidden" name="role" value="{{ $role }}">
                             <div class="input-row">
                                 <div class="input-col">
                                     <div class="form-floating">

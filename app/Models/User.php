@@ -53,8 +53,6 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
         'last_login' => 'datetime',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
     ];
 
     // Define available roles
@@ -88,11 +86,6 @@ class User extends Authenticatable
         return $this->password;
     }
 
-    public function personalInfo()
-    {
-        return $this->hasOne(PersonalInfo::class, 'user_id', 'user_id');
-    }
-
     public function organization()
     {
         return $this->hasOne(Organization::class, 'user_id', 'user_id');
@@ -113,5 +106,10 @@ class User extends Authenticatable
     public function isSuperAdmin()
     {
         return $this->role === self::ROLE_SUPER_ADMIN;
+    }
+
+    public function personalInfo()
+    {
+        return $this->hasOne(PersonalInfo::class, 'user_id', 'user_id');
     }
 }

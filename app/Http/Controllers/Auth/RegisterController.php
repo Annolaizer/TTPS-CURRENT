@@ -21,8 +21,8 @@ class RegisterController extends Controller
     public function store(Request $request)
     {
         // Convert role to proper format for validation
+        Log::info($request->all());
         $role = strtolower($request->role);
-        $role = str_replace(' ', '_', $role); // Convert "cpd facilitator" to "cpd_facilitator"
         $request->merge(['role' => $role]);
 
         Log::info('Starting teacher registration process', ['email' => $request->email, 'role' => $role]);
@@ -95,7 +95,10 @@ class RegisterController extends Controller
                     Facilitator::create([
                         'facilitator_id' => (string) Str::uuid(),
                         'user_id' => $user->user_id,
-                        'status' => 'pending'
+                        'status' => 'pending',
+                        'specialization' => $request->specialization ?? 'General Education',  // Default value
+                        'qualifications' => $request->qualifications ?? 'Pending verification',  // Default value
+                        'registration_number' => 'F' . Str::random(8)  // Generate a random registration number
                     ]);
                     Log::info('Facilitator profile created successfully');
                 }

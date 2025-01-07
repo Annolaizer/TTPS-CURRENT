@@ -14,12 +14,12 @@ return new class extends Migration
         Schema::create('organizations', function (Blueprint $table) {
             $table->id('organization_id');
             $table->string('name', 255);
-            $table->enum('type', ['government', 'ngo', 'private']);
+            $table->enum('type', ['Government', 'NGO', 'Private']);
             $table->string('registration_number', 50)->unique()->nullable();
             $table->string('email', 255)->unique();
             $table->string('phone', 15)->nullable();
             $table->text('address')->nullable();
-            $table->enum('status', ['active', 'inactive', 'pending'])->default('pending');
+            $table->string('status', 20)->default('pending');  
             $table->timestamps();
         });
     }

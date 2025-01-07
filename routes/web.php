@@ -2,10 +2,12 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\TrainingController;
 use App\Http\Controllers\Admin\TrainingAssignmentController;
 use App\Http\Controllers\LocationController;
+use App\Http\Controllers\Teacher\DashboardController as TeacherDashboardController;
+use App\Http\Controllers\CpdFacilitator\DashboardController as CpdFacilitatorDashboardController;
 
 Route::get('/', function () {
     return view('home.index');
@@ -24,8 +26,8 @@ Route::get('/about', function () {
 })->name('about');
 
 // Test route for admin dashboard without auth
-Route::get('/test/admin/dashboard', [DashboardController::class, 'index'])->name('test.admin.dashboard');
-Route::get('/test/admin/dashboard/data', [DashboardController::class, 'apiData'])->name('test.admin.dashboard.data');
+Route::get('/test/admin/dashboard', [AdminDashboardController::class, 'index'])->name('test.admin.dashboard');
+Route::get('/test/admin/dashboard/data', [AdminDashboardController::class, 'apiData'])->name('test.admin.dashboard.data');
 
 // Location API Routes
 Route::get('/api/districts/{region}', [LocationController::class, 'getDistricts'])->name('api.districts');
@@ -49,8 +51,7 @@ Route::prefix('trainings')->middleware(['auth'])->name('trainings.')->group(func
     Route::delete('/{trainingCode}/remove-facilitator/{facilitatorId}', [TrainingAssignmentController::class, 'removeFacilitator'])->name('facilitators.remove');
 });
 
-// Guest routes
-Route::middleware('guest')->group(function () {
+    // ####### LOGIN ROUTES #############
     Route::get('/login', function () {
         return view('login.index');
     })->name('login');
@@ -74,7 +75,9 @@ Route::middleware('guest')->group(function () {
     Route::post('/login/authenticate', [LoginController::class, 'authenticate'])
         ->name('login.authenticate');
 
-    // Registration Routes
+    // ########## END LOGIN ROUTES ##############
+
+    // ########### REGISTRATION ROUTES ###########
     Route::get('/register', function () {
         return view('register.index');
     })->name('register');
@@ -90,7 +93,7 @@ Route::middleware('guest')->group(function () {
             return view('auth.register.organization.index');
         }
 
-        return view('auth.register.index', ['role' => ucfirst(str_replace('_', ' ', $role))]);
+        return view('auth.register.index', ['role' =>  $role]);
     })->name('register.role');
 
     Route::post('/register/store', [App\Http\Controllers\Auth\RegisterController::class, 'store'])
@@ -98,11 +101,32 @@ Route::middleware('guest')->group(function () {
 
     Route::post('/register/organization/store', [App\Http\Controllers\Auth\RegisterController::class, 'storeOrganization'])
         ->name('register.organization.store');
-});
+
+        // ####### END REGISTRATION ROUTES ##############
 
 // Authentication Routes
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+
+    // Teacher routes
+    Route::prefix('teacher')
+        ->middleware(['auth', \App\Http\Middleware\TeacherMiddleware::class])
+        ->name('teacher.')
+        ->group(function () {
+            Route::get('/dashboard', [TeacherDashboardController::class, 'index'])->name('dashboard');
+            Route::get('/profile', [TeacherDashboardController::class, 'profile'])->name('profile');
+            Route::get('/profile/setup', [TeacherDashboardController::class, 'profileSetup'])->name('profile.setup');
+        });
+
+    // CPD Facilitator routes
+    Route::prefix('cpd_facilitator')
+        ->middleware(['auth', \App\Http\Middleware\CpdFacilitatorMiddleware::class])
+        ->name('cpd_facilitator.')
+        ->group(function () {
+            Route::get('/dashboard', [CpdFacilitatorDashboardController::class, 'index'])->name('dashboard');
+            Route::get('/profile', [CpdFacilitatorDashboardController::class, 'profile'])->name('profile');
+            Route::get('/profile/setup', [CpdFacilitatorDashboardController::class, 'profileSetup'])->name('profile.setup');
+        });
 });
 
 // Admin routes

@@ -14,9 +14,9 @@ class FacilitatorObserver
     {
         Notification::create([
             'notification_id' => \Illuminate\Support\Str::uuid(),
-            'user_id' => auth()->id() ?? '1', // Default to admin if no user is logged in
+            'user_id' => $facilitator->user_id, // Use the facilitator's user_id
             'title' => 'New CPD Facilitator Registration',
-            'message' => "A new CPD Facilitator {$facilitator->user->name} has registered.",
+            'message' => "A new CPD Facilitator {$facilitator->user->personalInfo->first_name} {$facilitator->user->personalInfo->last_name} has registered.",
             'type' => 'system',
             'is_read' => false,
         ]);
@@ -27,7 +27,14 @@ class FacilitatorObserver
      */
     public function updated(Facilitator $facilitator): void
     {
-        //
+        Notification::create([
+            'notification_id' => \Illuminate\Support\Str::uuid(),
+            'user_id' => $facilitator->user_id, // Use the facilitator's user_id
+            'title' => 'CPD Facilitator Profile Updated',
+            'message' => "The CPD Facilitator {$facilitator->user->personalInfo->first_name} {$facilitator->user->personalInfo->last_name} has updated their profile.",
+            'type' => 'system',
+            'is_read' => false,
+        ]);
     }
 
     /**

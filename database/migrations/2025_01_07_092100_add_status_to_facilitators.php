@@ -4,15 +4,15 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class FixNotificationsTableIdColumn extends Migration
+return new class extends Migration
 {
     /**
      * Run the migrations.
      */
     public function up(): void
     {
-        Schema::table('notifications', function (Blueprint $table) {
-            $table->uuid('notification_id')->change();
+        Schema::table('facilitators', function (Blueprint $table) {
+            $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
         });
     }
 
@@ -21,8 +21,8 @@ class FixNotificationsTableIdColumn extends Migration
      */
     public function down(): void
     {
-        Schema::table('notifications', function (Blueprint $table) {
-            $table->string('notification_id', 36)->change();
+        Schema::table('facilitators', function (Blueprint $table) {
+            $table->dropColumn('status');
         });
     }
-}
+};

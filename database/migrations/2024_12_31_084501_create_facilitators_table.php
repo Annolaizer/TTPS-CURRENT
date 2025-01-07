@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreign('user_id')->references('user_id')->on('users')->onDelete('cascade');
             $table->string('specialization', 100);
             $table->text('qualifications');
+            $table->string('registration_number')->nullable(); 
             $table->timestamps();
         });
     }
