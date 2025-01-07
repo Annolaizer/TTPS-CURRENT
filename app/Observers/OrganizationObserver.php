@@ -12,8 +12,13 @@ class OrganizationObserver
      */
     public function created(Organization $organization): void
     {
+        // Skip notification creation during initial registration
+        if (!auth()->check()) {
+            return;
+        }
+
         Notification::create([
-            'user_id' => auth()->id() ?? '1', // Default to admin if no user is logged in
+            'user_id' => auth()->id(),
             'title' => 'New Organization Registration',
             'message' => "A new organization {$organization->name} has registered.",
             'type' => 'system',

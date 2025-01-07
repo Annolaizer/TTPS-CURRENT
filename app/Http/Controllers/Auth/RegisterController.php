@@ -134,7 +134,7 @@ class RegisterController extends Controller
     public function storeOrganization(Request $request)
     {
         $validated = $request->validate([
-            'orgType' => ['required', 'in:government,private'],
+            'orgType' => ['required', 'in:government,private,ngo'],
             'orgName' => ['required', 'string', 'max:255'],
             'firstname' => ['required', 'string', 'max:50'],
             'lastname' => ['required', 'string', 'max:50'],
@@ -162,9 +162,9 @@ class RegisterController extends Controller
 
                 // Then create the organization with the user's ID
                 Organization::create([
-                    'user_id' => $user->user_id,
+                    'user_id' => $user->user_id,  // Add the user_id to link organization to user
                     'name' => $request->orgName,
-                    'type' => $request->orgType,
+                    'type' => strtoupper($request->orgType),  // Convert to uppercase to match enum values
                     'email' => $request->email,
                     'phone' => $request->telephone,
                     'status' => 'pending'

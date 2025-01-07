@@ -39,6 +39,7 @@
                                     <option value="" selected disabled hidden>Please select an option</option>
                                     <option value="private" {{ old('orgType') == 'private' ? 'selected' : '' }}>Private</option>
                                     <option value="government" {{ old('orgType') == 'government' ? 'selected' : '' }}>Government</option>
+                                    <option value="ngo" {{ old('orgType') == 'ngo' ? 'selected' : '' }}>NGO</option>
                                 </select>
                                 <label for="orgType">Organization type</label>
                                 @error('orgType')
