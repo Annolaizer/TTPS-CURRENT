@@ -133,15 +133,15 @@
                 </li>
 
                 <li class="nav-item">
-                    <a href="#teachersSubmenu" class="nav-link" data-bs-toggle="collapse">
+                    <a href="#teachersSubmenu" class="nav-link {{ request()->routeIs('admin.teachers.*') ? 'active' : '' }}" data-bs-toggle="collapse">
                         <i class="fas fa-chalkboard-teacher"></i>
                         <span>Teachers</span>
                         <i class="fas fa-chevron-down ms-auto"></i>
                     </a>
-                    <div class="collapse" id="teachersSubmenu">
+                    <div class="collapse {{ request()->routeIs('admin.teachers.*') ? 'show' : '' }}" id="teachersSubmenu">
                         <ul class="nav-list">
                             <li class="nav-item">
-                                <a href="#" class="nav-link">
+                                <a href="{{ route('admin.teachers.index') }}" class="nav-link {{ request()->routeIs('admin.teachers.index') ? 'active' : '' }}">
                                     <i class="fas fa-list"></i>
                                     <span>All Teachers</span>
                                 </a>
@@ -151,23 +151,17 @@
                 </li>
 
                 <li class="nav-item">
-                    <a href="#institutionsSubmenu" class="nav-link" data-bs-toggle="collapse">
+                    <a href="#institutionsSubmenu" class="nav-link {{ request()->routeIs('admin.institutions.*') ? 'active' : '' }}" data-bs-toggle="collapse">
                         <i class="fas fa-university"></i>
                         <span>Institutions</span>
                         <i class="fas fa-chevron-down ms-auto"></i>
                     </a>
-                    <div class="collapse" id="institutionsSubmenu">
+                    <div class="collapse {{ request()->routeIs('admin.institutions.*') ? 'show' : '' }}" id="institutionsSubmenu">
                         <ul class="nav-list">
                             <li class="nav-item">
-                                <a href="#" class="nav-link">
+                                <a href="{{ route('admin.institutions.index') }}" class="nav-link {{ request()->routeIs('admin.institutions.index') ? 'active' : '' }}">
                                     <i class="fas fa-list"></i>
                                     <span>All Institutions</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="#" class="nav-link">
-                                    <i class="fas fa-plus"></i>
-                                    <span>Add Institution</span>
                                 </a>
                             </li>
                         </ul>

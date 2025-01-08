@@ -5,11 +5,13 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\TrainingController;
 use App\Http\Controllers\Admin\TrainingAssignmentController;
+use App\Http\Controllers\Admin\TeacherController as AdminTeacherController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\Teacher\DashboardController as TeacherDashboardController;
 use App\Http\Controllers\CpdFacilitator\DashboardController as CpdFacilitatorDashboardController;
 use App\Http\Controllers\Organization\DashboardController as OrganizationDashboardController;
 use App\Http\Controllers\Organization\TrainingController as OrganizationTrainingController;
+use App\Http\Controllers\Admin\InstitutionController;
 
 Route::get('/', function () {
     return view('home.index');
@@ -150,6 +152,25 @@ Route::prefix('admin')->name('admin.')->group(function () {
         return view('admin.dashboard');
     })->name('dashboard');
 
+    // Institution routes
+    Route::get('/institutions', [InstitutionController::class, 'index'])->name('institutions.index');
+    Route::get('/institutions/create', [InstitutionController::class, 'create'])->name('institutions.create');
+    Route::post('/institutions', [InstitutionController::class, 'store'])->name('institutions.store');
+    Route::get('/institutions/{id}', [InstitutionController::class, 'show'])->name('institutions.show');
+    Route::match(['post', 'put'], '/institutions/{id}', [InstitutionController::class, 'update'])->name('institutions.update');
+    Route::post('/institutions/{id}/toggle-status', [InstitutionController::class, 'toggleStatus'])->name('institutions.toggle-status');
+    Route::delete('/institutions/{id}/approval-letter', [InstitutionController::class, 'deleteApprovalLetter'])->name('institutions.delete-approval-letter');
+    Route::get('/storage/{path}', function($path) {
+        return response()->file(storage_path('app/public/' . $path));
+    })->where('path', '.*');
+
+    // Teachers routes
+    Route::get('/teachers', [AdminTeacherController::class, 'index'])->name('teachers.index');
+    Route::get('/teachers/{teacherId}', [AdminTeacherController::class, 'show'])->name('teachers.show');
+    Route::get('/teachers/{teacherId}/edit', [AdminTeacherController::class, 'edit'])->name('teachers.edit');
+    Route::put('/teachers/{teacherId}', [AdminTeacherController::class, 'update'])->name('teachers.update');
+    Route::post('/teachers/{teacherId}/toggle-status', [AdminTeacherController::class, 'toggleStatus'])->name('teachers.toggle-status');
+
     // Training routes
     Route::prefix('trainings')->name('trainings.')->group(function () {
         Route::get('/', [TrainingController::class, 'index'])->name('index');
@@ -179,7 +200,6 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::delete('/{trainingCode}/remove-facilitator/{facilitatorId}', [TrainingAssignmentController::class, 'removeFacilitator'])->name('facilitators.remove');
     });
 });
-
 
 // Debug route to catch unmatched routes
 Route::fallback(function () {
