@@ -10,6 +10,7 @@ use App\Helpers\StatusHelper;
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="stylesheet" href="{{ asset('asset/css/admin/admin_training.css') }}">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/@ttskch/select2-bootstrap4-theme@x.x.x/dist/select2-bootstrap4.min.css" rel="stylesheet" />
     <link href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('plugins/datatables-bs4/css/dataTables.bootstrap4.min.css') }}">
     <link rel="stylesheet" href="{{ asset('plugins/datatables-responsive/css/responsive.bootstrap4.min.css') }}">
@@ -65,6 +66,33 @@ use App\Helpers\StatusHelper;
         }
         .table td {
             vertical-align: middle;
+        }
+        .select2-container--bootstrap4 .select2-selection--single {
+            height: calc(2.25rem + 2px) !important;
+        }
+        .select2-container--bootstrap4 .select2-selection--single .select2-selection__placeholder {
+            color: #757575;
+            line-height: 2.25rem;
+        }
+        .select2-container--bootstrap4 .select2-selection--single .select2-selection__arrow {
+            position: absolute;
+            top: 50%;
+            right: 3px;
+            width: 20px;
+            transform: translateY(-50%);
+        }
+        .select2-container--bootstrap4 .select2-selection--single .select2-selection__rendered {
+            line-height: 2.25rem;
+        }
+        .select2-container--bootstrap4 .select2-results__option {
+            padding: 0.75rem 1rem;
+        }
+        .select2-container--bootstrap4 .select2-results__option--highlighted {
+            background-color: var(--bs-primary) !important;
+        }
+        .select2-search--dropdown .select2-search__field {
+            padding: 0.5rem;
+            border-radius: 0.25rem;
         }
     </style>
 @endpush
@@ -324,28 +352,36 @@ use App\Helpers\StatusHelper;
                                 <!-- Available Teachers Section -->
                                 <div class="col-md-6">
                                     <div class="card">
-                                        <div class="card-header bg-light">
-                                            <h6 class="mb-0">Available Teachers</h6>
-                                            <small class="text-muted">Teachers matching education level and availability</small>
-                                        </div>
                                         <div class="card-body">
-                                            <div class="mb-3">
-                                                <input type="text" class="form-control" id="teacher-search" placeholder="Search teachers...">
+                                            <div class="form-group mb-3">
+                                                <label for="region_filter" class="form-label">
+                                                    Filter by Region
+                                                </label>
+                                                <select class="form-select select2-region" id="region_filter" name="region_filter" style="width: 100%">
+                                                    <option value="" data-icon="fas fa-globe">All Regions</option>
+                                                    @foreach($regions as $region)
+                                                        <option value="{{ $region->region_id }}">{{ $region->region_name }}</option>
+                                                    @endforeach
+                                                </select>
                                             </div>
-                                            <div class="table-responsive" style="max-height: 400px;">
-                                                <table class="table table-hover" id="available-teachers-table">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Name</th>
-                                                            <th>Education Level</th>
-                                                            <th>School</th>
-                                                            <th>Action</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        <!-- Populated dynamically -->
-                                                    </tbody>
-                                                </table>
+                                            <div class="teachers-container border rounded p-3">
+                                                <!-- Header with Select All and Counter -->
+                                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                                    <div class="form-check">
+                                                        <input type="checkbox" class="form-check-input" id="select-all">
+                                                        <label class="form-check-label" for="select-all">Select All</label>
+                                                    </div>
+                                                    <div>
+                                                        <small class="text-muted">Total Teachers: <span id="total-teachers">0</span></small>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Scrollable Teachers List -->
+                                                <div class="teachers-scroll" style="height: 400px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 4px; background-color: #f8f9fa;">
+                                                    <div id="teachers-content" class="p-2">
+                                                        <!-- Teachers will be dynamically loaded here -->
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -354,10 +390,6 @@ use App\Helpers\StatusHelper;
                                 <!-- Available Facilitators Section -->
                                 <div class="col-md-6">
                                     <div class="card">
-                                        <div class="card-header bg-light">
-                                            <h6 class="mb-0">Available CPD Facilitators</h6>
-                                            <small class="text-muted">Facilitators available for the training period</small>
-                                        </div>
                                         <div class="card-body">
                                             <div class="mb-3">
                                                 <input type="text" class="form-control" id="facilitator-search" placeholder="Search facilitators...">
@@ -397,34 +429,11 @@ use App\Helpers\StatusHelper;
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script src="{{ asset('plugins/datatables/jquery.dataTables.min.js') }}"></script>
-    <script src="{{ asset('plugins/datatables-bs4/js/dataTables.bootstrap4.min.js') }}"></script>
-    <script src="{{ asset('plugins/datatables-responsive/js/dataTables.responsive.min.js') }}"></script>
-    <script src="{{ asset('asset/js/admin/training_assignment.js') }}"></script>
-    <script>
-        // Initialize Select2 for static elements
-        $(document).ready(function() {
-            // Initialize Select2 for phase modal
-            $('#phase-modal .select2').select2({
-                width: '100%',
-                dropdownParent: $('#phase-modal'),
-                placeholder: 'Select an option'
-            });
-
-            // Initialize location selects
-            $('#district').select2({
-                width: '100%',
-                placeholder: 'Select District',
-                dropdownParent: $('#phase-modal')
-            });
-
-            $('#ward').select2({
-                width: '100%',
-                placeholder: 'Select Ward',
-                dropdownParent: $('#phase-modal')
-            });
-        });
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- Custom Scripts -->
+    <script src="{{ asset('asset/js/training/training_phase.js') }}"></script>
+    <script src="{{ asset('asset/js/training/participant_assignment.js') }}"></script>
 @endpush
 
 @endsection

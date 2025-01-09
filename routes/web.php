@@ -12,6 +12,7 @@ use App\Http\Controllers\CpdFacilitator\DashboardController as CpdFacilitatorDas
 use App\Http\Controllers\Organization\DashboardController as OrganizationDashboardController;
 use App\Http\Controllers\Organization\TrainingController as OrganizationTrainingController;
 use App\Http\Controllers\Admin\InstitutionController;
+use App\Http\Controllers\QualifiedTeacherController;
 
 Route::get('/', function () {
     return view('home.index');
@@ -37,8 +38,11 @@ Route::get('/test/admin/dashboard/data', [AdminDashboardController::class, 'apiD
 Route::get('/api/districts/{region}', [LocationController::class, 'getDistricts'])->name('api.districts');
 Route::get('/api/wards/{district}', [LocationController::class, 'getWards'])->name('api.wards');
 
+// ASSIGN TRAINING ROUTE
+Route::get('/qualified-teachers/{training_code}', [QualifiedTeacherController::class, 'index'])->name('qualified-teachers');
+
 // Training routes
-Route::prefix('trainings')->middleware(['auth'])->name('trainings.')->group(function () {
+Route::prefix('trainings')->name('trainings.')->group(function () {
     // Training Assignment routes
     Route::get('/{trainingCode}/assignment', [TrainingAssignmentController::class, 'show'])->name('assignment.show');
     Route::get('/{trainingCode}/participants/data', [TrainingAssignmentController::class, 'getParticipants'])->name('participants.data');

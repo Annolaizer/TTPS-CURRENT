@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Models\User;
 use App\Models\Training;
+use App\Models\Ward;
 
 class TeacherProfile extends Model
 {
@@ -44,6 +45,11 @@ class TeacherProfile extends Model
         return $this->belongsToMany(Training::class, 'training_teachers', 'teacher_id', 'training_id')
                     ->withPivot('status')
                     ->withTimestamps();
+    }
+
+    public function ward()
+    {
+        return $this->belongsTo(Ward::class, 'ward_id');
     }
 
     public function getStatusBadgeAttribute()

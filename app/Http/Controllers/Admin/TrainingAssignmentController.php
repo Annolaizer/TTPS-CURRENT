@@ -14,7 +14,9 @@ use App\Models\Subject;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\DataTables;
+use FPDF;
 
 class TrainingAssignmentController extends Controller
 {
@@ -43,8 +45,8 @@ class TrainingAssignmentController extends Controller
     {
         $training = Training::where('training_code', $trainingCode)->firstOrFail();
 
-        // Get teachers matching education level and not already assigned
-        $teachers = TeacherProfile::where('education_level', $training->education_level)
+        // Build query for teachers
+        $query = TeacherProfile::where('education_level', $training->education_level)
             ->whereHas('user', function($query) {
                 $query->where('status', 'active')
                       ->where('role', 'teacher');
@@ -55,19 +57,43 @@ class TrainingAssignmentController extends Controller
                           $q->where('trainings.start_date', '<=', $training->end_date)
                             ->where('trainings.end_date', '>=', $training->start_date);
                       });
-            })
-            ->with('user')
+            });
+
+        // Apply region filter if provided
+        if ($request->filled('region_id')) {
+            $query->whereHas('school', function($q) use ($request) {
+                $q->whereHas('ward', function($q) use ($request) {
+                    $q->whereHas('district', function($q) use ($request) {
+                        $q->where('region_id', $request->region_id);
+                    });
+                });
+            });
+        }
+
+        // Get teachers with all necessary relationships
+        $teachers = $query->with(['user', 'school.ward.district.region'])
             ->get()
             ->map(function($teacher) {
                 return [
                     'id' => $teacher->teacher_id,
                     'name' => $teacher->user->name,
+                    'registration_number' => $teacher->registration_number,
                     'education_level' => $teacher->education_level,
-                    'status' => 'Available'
+                    'years_of_experience' => $teacher->years_of_experience,
+                    'current_school' => $teacher->school->name,
+                    'ward_name' => $teacher->school->ward->name,
+                    'district_name' => $teacher->school->ward->district->name,
+                    'region_name' => $teacher->school->ward->district->region->region_name
                 ];
             });
 
-        return response()->json($teachers);
+        return response()->json([
+            'status' => 'success',
+            'data' => [
+                'teachers' => $teachers,
+                'total_teachers' => $teachers->count()
+            ]
+        ]);
     }
 
     /**
@@ -273,6 +299,21 @@ class TrainingAssignmentController extends Controller
 
         return DataTables::of($query)
             ->addIndexColumn()
+            ->filterColumn('name', function($query, $keyword) {
+                $query->whereRaw('LOWER(users.name) LIKE ?', ["%".strtolower($keyword)."%"]);
+            })
+            ->filterColumn('type', function($query, $keyword) {
+                $query->whereRaw("CASE 
+                    WHEN training_teachers.id IS NOT NULL THEN 'Teacher'
+                    ELSE 'CPD Facilitator'
+                END LIKE ?", ["%".strtolower($keyword)."%"]);
+            })
+            ->filterColumn('attendance_status', function($query, $keyword) {
+                $query->whereRaw('LOWER(attendance_status) LIKE ?', ["%".strtolower($keyword)."%"]);
+            })
+            ->filterColumn('report_file', function($query, $keyword) {
+                $query->whereRaw('LOWER(report_file) LIKE ?', ["%".strtolower($keyword)."%"]);
+            })
             ->rawColumns(['attendance_status'])
             ->make(true);
     }
@@ -385,59 +426,15 @@ class TrainingAssignmentController extends Controller
             }
         }
         
-        if ($participant->attendance_status !== 'attended' || !$participant->report_file) {
-            abort(404, 'No report file available for this participant');
+        if ($participant->attendance_status !== 'attended') {
+            abort(404, 'No report available - participant has not attended the training');
         }
-        
-        // Generate a dynamic PDF report
-        $headers = [
-            'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'attachment; filename="training_report.pdf"',
-        ];
-        
-        // Create PDF using FPDF
-        $pdf = new \FPDF();
-        $pdf->AddPage();
-        
-        // Title
-        $pdf->SetFont('Arial', 'B', 16);
-        $pdf->Cell(0, 10, 'Training Participant Report', 0, 1, 'C');
-        $pdf->Ln(10);
-        
-        // Training Details
-        $pdf->SetFont('Arial', 'B', 12);
-        $pdf->Cell(50, 10, 'Training Code:', 0);
-        $pdf->SetFont('Arial', '', 12);
-        $pdf->Cell(0, 10, $trainingCode, 0, 1);
-        
-        $pdf->SetFont('Arial', 'B', 12);
-        $pdf->Cell(50, 10, 'Training Title:', 0);
-        $pdf->SetFont('Arial', '', 12);
-        $pdf->Cell(0, 10, $training->title, 0, 1);
-        
-        // Participant Details
-        $pdf->Ln(5);
-        $pdf->SetFont('Arial', 'B', 12);
-        $pdf->Cell(50, 10, 'Participant ID:', 0);
-        $pdf->SetFont('Arial', '', 12);
-        $pdf->Cell(0, 10, $participantId, 0, 1);
-        
-        $pdf->SetFont('Arial', 'B', 12);
-        $pdf->Cell(50, 10, 'Type:', 0);
-        $pdf->SetFont('Arial', '', 12);
-        $pdf->Cell(0, 10, $participant instanceof TrainingTeacher ? 'Teacher' : 'CPD Facilitator', 0, 1);
-        
-        $pdf->SetFont('Arial', 'B', 12);
-        $pdf->Cell(50, 10, 'Status:', 0);
-        $pdf->SetFont('Arial', '', 12);
-        $pdf->Cell(0, 10, ucfirst($participant->attendance_status), 0, 1);
-        
-        // Generated timestamp
-        $pdf->Ln(10);
-        $pdf->SetFont('Arial', 'I', 10);
-        $pdf->Cell(0, 10, 'Generated on: ' . now()->format('Y-m-d H:i:s'), 0, 1, 'R');
-        
-        return response($pdf->Output('S'), 200, $headers);
+
+        if (!$participant->report_file || !Storage::disk('public')->exists($participant->report_file)) {
+            abort(404, 'Report file not found');
+        }
+
+        return Storage::disk('public')->download($participant->report_file, 'training_report.pdf');
     }
 
     private function checkMoestAndGovernmentTraining($training)
