@@ -58,17 +58,103 @@
         }
         .modal-content {
             background-color: #fefefe;
-            margin: 5% auto;
+            margin: 2% auto;
             padding: 20px;
             border: 1px solid #888;
-            width: 90%;
-            max-width: 1000px;
+            width: 95%;
+            max-width: 1200px;
             border-radius: 8px;
             position: relative;
-            z-index: 1051;
         }
-        .swal2-container {
-            z-index: 2000 !important;
+        .modal-header {
+            background-color: #f8f9fa;
+            margin: -20px -20px 20px -20px;
+            padding: 15px 20px;
+            border-bottom: 1px solid #dee2e6;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .modal-body {
+            max-height: calc(100vh - 200px);
+            overflow-y: auto;
+            padding: 0 10px;
+        }
+        .close-modal {
+            position: absolute;
+            right: 20px;
+            top: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #888;
+            transition: color 0.2s;
+        }
+        .close-modal:hover {
+            color: #333;
+        }
+        /* Table Styles */
+        .table {
+            font-size: 0.875rem;
+        }
+        .table th {
+            font-weight: 600;
+            font-size: 0.8125rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background-color: #f8f9fa;
+            vertical-align: middle;
+        }
+        .table td {
+            vertical-align: middle;
+            padding: 0.5rem;
+        }
+        .table .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+        }
+        .badge {
+            font-size: 0.75rem;
+            padding: 0.35em 0.65em;
+        }
+        
+        /* Badge Styles */
+        .stats-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(45deg, #36b9cc, #1a8997);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            box-shadow: 0 2px 4px rgba(54, 185, 204, 0.2);
+            min-width: 180px;
+        }
+        .stats-badge .icon-circle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .stats-badge .badge-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-grow: 1;
+        }
+        .stats-badge .badge-label {
+            font-weight: 500;
+        }
+        .stats-badge .badge-value {
+            font-weight: 600;
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 0.2rem 0.6rem;
+            border-radius: 15px;
         }
         .document-preview {
             border: 1px solid #dee2e6;
@@ -102,17 +188,6 @@
             padding-top: 20px;
             border-top: 1px solid #dee2e6;
         }
-        .close-modal {
-            position: absolute;
-            right: 20px;
-            top: 10px;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .close-modal:hover {
-            color: #666;
-        }
     </style>
 @endpush
 
@@ -139,12 +214,27 @@
                         </select>
                     </div>
                     <div class="col-md-3">
-                        <select class="form-select filter-input" id="status-filter">
-                            <option value="">All Status</option>
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
-                            <option value="pending">Pending</option>
-                        </select>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <select class="form-select filter-input" id="status-filter">
+                                <option value="">All Status</option>
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                                <option value="pending">Pending</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="ms-3 flex-grow-1">
+                            <div class="stats-badge">
+                                <div class="icon-circle">
+                                    <i class="fas fa-building"></i>
+                                </div>
+                                <div class="badge-content">
+                                    <span class="badge-label">Total Institutions</span>
+                                    <span class="badge-value" style="margin-left: 5px;">{{ $institutions->total() ?? count($institutions) }}</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -182,13 +272,13 @@
                                 <td>
                                     <div class="d-flex gap-2">
                                         <button type="button" 
-                                           class="btn btn-sm btn-info"
+                                           class="btn btn-sm btn-info text-white"
                                            onclick="viewInstitution('{{ $institution->organization_id }}')"
                                            title="View Details">
                                             <i class="fas fa-eye"></i>
                                         </button>
                                         <button type="button" 
-                                           class="btn btn-sm btn-primary"
+                                           class="btn btn-sm btn-warning text-white"
                                            onclick="editInstitution('{{ $institution->organization_id }}')"
                                            title="Edit">
                                             <i class="fas fa-edit"></i>
@@ -213,9 +303,11 @@
     <!-- View Modal -->
     <div id="viewModal" class="modal">
         <div class="modal-content">
-            <span class="close-modal" onclick="closeModal('viewModal')">&times;</span>
-            <h4 class="mb-4">Institution Details</h4>
-            <div id="viewModalContent">
+            <div class="modal-header">
+                <h4 class="mb-0">Institution Details</h4>
+                <button type="button" class="btn-close" onclick="closeModal('viewModal')" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="viewModalContent">
                 <!-- Content will be loaded here -->
             </div>
         </div>

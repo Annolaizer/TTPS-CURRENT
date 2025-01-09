@@ -13,7 +13,10 @@ class InstitutionController extends Controller
 {
     public function index()
     {
-        $institutions = Organization::with(['user'])->get();
+        $institutions = Organization::with('user')
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
+
         return view('admin.institutions.index', compact('institutions'));
     }
 
