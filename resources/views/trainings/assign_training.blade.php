@@ -347,6 +347,7 @@ use App\Helpers\StatusHelper;
                                         <label class="form-check-label" for="optional">Optional Training</label>
                                     </div>
                                 </div>
+                                <input type="hidden" id="max-participants" name="max_participants" value="{{ $training->max_participants }}">
                             </div>
 
                             <div class="row">
