@@ -112,4 +112,9 @@ class User extends Authenticatable
     {
         return $this->hasOne(PersonalInfo::class, 'user_id', 'user_id');
     }
+
+    public function facilitator()
+    {
+        return $this->hasOne(Facilitator::class, 'user_id', 'user_id');
+    }
 }

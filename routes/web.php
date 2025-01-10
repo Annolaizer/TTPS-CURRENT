@@ -13,6 +13,7 @@ use App\Http\Controllers\Organization\DashboardController as OrganizationDashboa
 use App\Http\Controllers\Organization\TrainingController as OrganizationTrainingController;
 use App\Http\Controllers\Admin\InstitutionController;
 use App\Http\Controllers\QualifiedTeacherController;
+use App\Http\Controllers\QualifiedFacilitatorsController;
 
 Route::get('/', function () {
     return view('home.index');
@@ -40,6 +41,7 @@ Route::get('/api/wards/{district}', [LocationController::class, 'getWards'])->na
 
 // ASSIGN TRAINING ROUTE
 Route::get('/qualified-teachers/{training_code}', [QualifiedTeacherController::class, 'index'])->name('qualified-teachers');
+Route::get('/qualified-facilitators/{training_code}', [QualifiedFacilitatorsController::class, 'index'])->name('qualified-facilitators');
 
 // Training routes
 Route::prefix('trainings')->name('trainings.')->group(function () {

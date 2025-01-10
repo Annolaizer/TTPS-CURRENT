@@ -105,6 +105,7 @@ use App\Helpers\StatusHelper;
             <div class="info-card">
                 <h6>Training Code</h6>
                 <p id="training-code">{{ $training->training_code }}</p>
+                <input type="hidden" name="training_code" value="{{ $training->training_code }}" id="training-code-input">
             </div>
             <div class="info-card">
                 <h6>Title</h6>
@@ -391,23 +392,30 @@ use App\Helpers\StatusHelper;
                                 <div class="col-md-6">
                                     <div class="card">
                                         <div class="card-body">
-                                            <div class="mb-3">
-                                                <input type="text" class="form-control" id="facilitator-search" placeholder="Search facilitators...">
+                                            <div class="form-group mb-3">
+                                                <label for="facilitator-search" class="form-label">
+                                                    Search Facilitators
+                                                </label>
+                                                <input type="text" class="form-control" id="facilitator-search" placeholder="Search by name or specialization...">
                                             </div>
-                                            <div class="table-responsive" style="max-height: 400px;">
-                                                <table class="table table-hover" id="available-facilitators-table">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Name</th>
-                                                            <th>Specialization</th>
-                                                            <th>Experience</th>
-                                                            <th>Action</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        <!-- Populated dynamically -->
-                                                    </tbody>
-                                                </table>
+                                            <div class="facilitators-container border rounded p-3">
+                                                <!-- Header with Select All and Counter -->
+                                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                                    <div class="form-check">
+                                                        <input type="checkbox" class="form-check-input" id="select-all-facilitators">
+                                                        <label class="form-check-label" for="select-all-facilitators">Select All</label>
+                                                    </div>
+                                                    <div>
+                                                        <small class="text-muted">Total Facilitators: <span id="total-facilitators">0</span></small>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Scrollable Facilitators List -->
+                                                <div class="facilitators-scroll" style="height: 400px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 4px; background-color: #f8f9fa;">
+                                                    <div id="facilitators-content" class="p-2">
+                                                        <!-- Facilitators will be dynamically loaded here -->
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -435,5 +443,4 @@ use App\Helpers\StatusHelper;
     <script src="{{ asset('asset/js/training/training_phase.js') }}"></script>
     <script src="{{ asset('asset/js/training/participant_assignment.js') }}"></script>
 @endpush
-
 @endsection
