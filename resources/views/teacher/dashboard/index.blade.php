@@ -342,9 +342,9 @@
                         <div class="profile-email">{{ Auth::user()->email }}</div>
                     </div>
                     <div class="profile-menu">
-                        <a href="#"><i class="fas fa-home text-prime"></i>Home</a>
-                        <a href="#"><i class="fas fa-certificate text-prime"></i>Training</a>
-                        <a href="#"><i class="fas fa-cog text-prime"></i>Account settings</a>
+                        <a href="{{ route('teacher.dashboard') }}"><i class="fas fa-home text-prime"></i>Home</a>
+                        <a href="{{ route('teacher.training') }}"><i class="fas fa-certificate text-prime"></i>Training</a>
+                        <a href="{{ route('teacher.settings') }}"><i class="fas fa-cog text-prime"></i>Account settings</a>
                         <div class="divider"></div>
                         <form method="POST" action="{{ route('logout') }}" id="logout-form">
                             @csrf
@@ -369,7 +369,7 @@
                         <div class="portal">WELCOME TO THE TANZANIA TEACHER PORTALPLATFORM</div>
                     </div>
                     <p>Get started by setting up or updating your profile, after which you can start using the platform.</p>
-                    <a href="{{ route('teacher.profile.setup') }}" class="setup-btn">
+                    <a href="{{ route('teacher.basic_info') }}" class="setup-btn">
                         <i class="fas fa-user-cog"></i> Set Up Teacher Profile
                     </a>
                 </div>

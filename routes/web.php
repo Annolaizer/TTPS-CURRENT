@@ -8,12 +8,16 @@ use App\Http\Controllers\Admin\TrainingAssignmentController;
 use App\Http\Controllers\Admin\TeacherController as AdminTeacherController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\Teacher\DashboardController as TeacherDashboardController;
+use App\Http\Controllers\Teacher\SettingsController as TeacherSettingsController;
 use App\Http\Controllers\CpdFacilitator\DashboardController as CpdFacilitatorDashboardController;
+use App\Http\Controllers\CpdFacilitator\SettingsController as CpdFacilitatorSettingsController;
 use App\Http\Controllers\Organization\DashboardController as OrganizationDashboardController;
 use App\Http\Controllers\Organization\TrainingController as OrganizationTrainingController;
 use App\Http\Controllers\Admin\InstitutionController;
 use App\Http\Controllers\QualifiedTeacherController;
 use App\Http\Controllers\QualifiedFacilitatorsController;
+use App\Http\Controllers\TeacherProfileController;
+use App\Http\Controllers\CpdFacilitator\CPDFacilitatorTrainingController;
 
 Route::get('/', function () {
     return view('home.index');
@@ -126,6 +130,11 @@ Route::middleware('auth')->group(function () {
             Route::get('/dashboard', [TeacherDashboardController::class, 'index'])->name('dashboard');
             Route::get('/profile', [TeacherDashboardController::class, 'profile'])->name('profile');
             Route::get('/profile/setup', [TeacherDashboardController::class, 'profileSetup'])->name('profile.setup');
+            Route::get('/training', [TeacherProfileController::class, 'index'])->name('training');
+            Route::get('/settings', [TeacherSettingsController::class, 'index'])->name('settings');
+            Route::get('/basic-info', function() {
+                return view('teacher.basic_info.index');
+            })->name('basic_info');
         });
 
     // CPD Facilitator routes
@@ -136,6 +145,11 @@ Route::middleware('auth')->group(function () {
             Route::get('/dashboard', [CpdFacilitatorDashboardController::class, 'index'])->name('dashboard');
             Route::get('/profile', [CpdFacilitatorDashboardController::class, 'profile'])->name('profile');
             Route::get('/profile/setup', [CpdFacilitatorDashboardController::class, 'profileSetup'])->name('profile.setup');
+            Route::get('/training', [CPDFacilitatorTrainingController::class, 'index'])->name('training');
+            Route::get('/settings', [CpdFacilitatorSettingsController::class, 'index'])->name('settings');
+            Route::get('/basic-info', function() {
+                return view('cpd_facilitator.basic_info.index');
+            })->name('cpd_basic_info');
         });
 
     // Organization routes
@@ -176,7 +190,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/teachers/{teacherId}/edit', [AdminTeacherController::class, 'edit'])->name('teachers.edit');
     Route::put('/teachers/{teacherId}', [AdminTeacherController::class, 'update'])->name('teachers.update');
     Route::post('/teachers/{teacherId}/toggle-status', [AdminTeacherController::class, 'toggleStatus'])->name('teachers.toggle-status');
-
+    
     // Training routes
     Route::prefix('trainings')->name('trainings.')->group(function () {
         Route::get('/', [TrainingController::class, 'index'])->name('index');

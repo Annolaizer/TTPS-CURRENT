@@ -343,8 +343,8 @@
                     </div>
                     <div class="profile-menu">
                         <a href="{{ route('cpd_facilitator.dashboard') }}"><i class="fas fa-home text-prime"></i>Home</a>
-                        <a href="#"><i class="fas fa-certificate text-prime"></i>Training</a>
-                        <a href="{{ route('cpd_facilitator.profile') }}"><i class="fas fa-cog text-prime"></i>Account settings</a>
+                        <a href="{{ route('cpd_facilitator.training') }}"><i class="fas fa-certificate text-prime"></i>Training</a>
+                        <a href="{{ route('cpd_facilitator.settings') }}"><i class="fas fa-cog text-prime"></i>Account settings</a>
                         <div class="divider"></div>
                         <form method="POST" action="{{ route('logout') }}" id="logout-form">
                             @csrf
@@ -369,7 +369,7 @@
                         <div class="portal">WELCOME TO THE TANZANIA TEACHER PORTALPLATFORM</div>
                     </div>
                     <p>Get started by setting up or updating your profile, after which you can start using the platform.</p>
-                    <a href="{{ route('cpd_facilitator.profile.setup') }}" class="setup-btn">
+                    <a href="{{ route('cpd_facilitator.cpd_basic_info') }}" class="setup-btn">
                         <i class="fas fa-user-cog"></i> Set Up CPD Facilitator Profile
                     </a>
                 </div>
