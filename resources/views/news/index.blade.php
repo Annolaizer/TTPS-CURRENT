@@ -6,14 +6,27 @@
     <link rel="shortcut icon" href="{{ asset('images/logo.png') }}" type="image/x-icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ asset('asset/css/news_theme.css') }}" media="screen and (min-width: 768px)" rel="stylesheet" href="asset/css/news_theme.css">
+    <link rel="stylesheet" href="{{ asset('asset/css/news_theme.css') }}">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+        }
+
+        .navbar {
+            background-color: #009c95;
+            padding: 1rem 0;
+            margin: 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+    </style>
     <title>TTP - News</title>
 </head>
 <body>
-    <!-- Announcement Bar -->
-    <div class="top_bar">
-        GES teachers who cannot verify their Staff ID or SSNIT should send their payslip, SSNIT ID and scanned first appointment letter to it@ntc.gov.gh . The Duration for processing Letter of Professional Standing takes a maximum of 30 working days.
-    </div>
 
     <!-- Navigation Bar -->
     <nav class="navbar navbar-expand-lg">

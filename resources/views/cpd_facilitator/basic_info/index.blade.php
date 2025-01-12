@@ -1437,26 +1437,26 @@
     <!-- Navigation Bar -->
     <nav class="navbar">
         <div class="container">
-            <a href="user_dashboard.html" class="navbar-brand">
-                <img src="{{ asset('asset/images/logo.png') }}" alt="Logo" id="logo">
-                <span class="portal-name">Teacher Portal Tanzania</span>
+            <a href="{{ route('teacher.dashboard') }}" class="navbar-brand">
+                <img src="{{ asset('asset/images/logo.png') }}" alt="Logo" class="logo">
+                <span class="portal-name">Tanzania Teacher Portal</span>
             </a>
             <div class="user-profile">
                 <button class="profile-trigger" onclick="toggleDropdown()" style="margin-right: -40px;">
                     <i class="fas fa-user"></i>
                 </button>
+
                 <div class="profile-dropdown" id="profileDropdown">
                     <div class="profile-header">
                         <i class="fas fa-user"></i>
-                        <div class="profile-name">ANOLA Juventus MATIMBWI</div>
-                        <div class="profile-email">annolamatimbwi@gmail.com</div>
+                        <div class="profile-name">{{ Auth::user()->name }}</div>
+                        <div class="profile-email">{{ Auth::user()->email }}</div>
                     </div>
                     <div class="profile-menu">
-                        <a href=""><i class="fas fa-home text-prime"></i>Home</a>
-                        <a href="{{ route('cpd_facilitator.training') }}"><i class="fas fa-certificate text-prime"></i>Trainings</a>
-                        <a href="#"><i class="fas fa-cog text-prime"></i>Account settings</a>
+                        <a href="{{ route('teacher.dashboard') }}"><i class="fas fa-home text-prime"></i>Home</a>
+                        <a href="{{ route('teacher.training') }}"><i class="fas fa-certificate text-prime"></i>Training</a>
+                        <a href="{{ route('teacher.settings') }}"><i class="fas fa-cog text-prime"></i>Account settings</a>
                         <div class="divider"></div>
-                        <a href="login.html"><i class="fas fa-user-plus text-prime"></i>Log into another account</a>
                         <form method="POST" action="{{ route('logout') }}" id="logout-form">
                             @csrf
                             <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
