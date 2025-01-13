@@ -54,8 +54,15 @@ class LoginController extends Controller
                 ]);
             }
 
-            // Check role
-            if ($user->role !== $credentials['role']) {
+            // For admin login page, check if user is either admin or super_administrator
+            if ($credentials['role'] === 'admin' && !in_array($user->role, ['admin', 'super_administrator'])) {
+                throw ValidationException::withMessages([
+                    'email' => ['This account does not have administrative access.'],
+                ]);
+            }
+
+            // For other roles, check exact match
+            if ($credentials['role'] !== 'admin' && $user->role !== $credentials['role']) {
                 throw ValidationException::withMessages([
                     'role' => ['The provided credentials do not match the selected role.'],
                 ]);
@@ -68,9 +75,9 @@ class LoginController extends Controller
             // Update last login timestamp
             $user->update(['last_login' => now()]);
 
-            // Using test route for admin dashboard
+            // Redirect to admin dashboard for both admin and super_administrator
             $redirectPath = match($user->role) {
-                'admin', 'super_administrator' => route('test.admin.dashboard'),
+                'admin', 'super_administrator' => route('admin.dashboard'),
                 'teacher' => route('teacher.dashboard'),
                 'cpd_facilitator' => route('cpd_facilitator.dashboard'),
                 'organization' => route('organization.dashboard'),
@@ -99,7 +106,7 @@ class LoginController extends Controller
                 return response()->json([
                     'success' => false,
                     'errors' => $e->errors(),
-                ], 422);
+                ]);
             }
             throw $e;
         } catch (\Exception $e) {
@@ -116,9 +123,16 @@ class LoginController extends Controller
 
     public function logout(Request $request)
     {
+        $userRole = Auth::user()->role;
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
+        // Redirect admin users back to admin login page
+        if (in_array($userRole, ['admin', 'super_administrator'])) {
+            return redirect()->route('login.role', 'admin');
+        }
+
         return redirect('/');
     }
 }

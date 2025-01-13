@@ -74,7 +74,7 @@
     <div class="container-fluid">
         <div class="row">
             <div class="col-md-4 bg-photo">
-                <h3>Teacher Portal Tanzania<br>Administration</h3>
+                <h3>Tanzania Teacher Portal<br>Administration</h3>
             </div>
             <div class="col-md-8">
                 <div class="card-container">
@@ -85,15 +85,7 @@
                     <div class="form-container">
                         <form id="loginForm" action="{{ route('login.authenticate') }}" method="POST" autocomplete="off" novalidate>
                             @csrf
-                            <input type="hidden" name="role" value="super_administrator" id="role">
-
-                            <div class="form-floating mb-4">
-                                <select class="form-select" id="admin_type" onchange="updateRole(this.value)">
-                                    <option value="super_administrator">Super Administrator</option>
-                                    <option value="admin">Administrator</option>
-                                </select>
-                                <label for="admin_type" class="text-muted">Select Role</label>
-                            </div>
+                            <input type="hidden" name="role" value="admin">
 
                             <div class="form-floating mb-4">
                                 <input type="email" id="email" name="email" class="form-control @error('email') is-invalid @enderror" 
@@ -108,7 +100,7 @@
                                 <input type="password" id="password" name="password" class="form-control @error('password') is-invalid @enderror" 
                                     placeholder="Password" required>
                                 <label for="password" class="text-muted">Password</label>
-                                <i class="password-toggle fas fa-eye" onclick="togglePassword(this)"></i>
+                                <i class="fas fa-eye-slash password-toggle" onclick="togglePassword()"></i>
                                 @error('password')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -132,21 +124,18 @@
             }
         });
 
-        function togglePassword(icon) {
-            const input = icon.parentElement.querySelector('input');
+        function togglePassword() {
+            const input = document.getElementById('password');
+            const icon = document.querySelector('.password-toggle');
             if (input.type === 'password') {
                 input.type = 'text';
-                icon.classList.remove('fa-eye');
-                icon.classList.add('fa-eye-slash');
-            } else {
-                input.type = 'password';
                 icon.classList.remove('fa-eye-slash');
                 icon.classList.add('fa-eye');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
             }
-        }
-
-        function updateRole(value) {
-            document.getElementById('role').value = value;
         }
 
         $(document).ready(function() {

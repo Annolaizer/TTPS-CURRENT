@@ -106,6 +106,7 @@ use App\Helpers\StatusHelper;
                 <h6>Training Code</h6>
                 <p id="training-code">{{ $training->training_code }}</p>
                 <input type="hidden" name="training_code" value="{{ $training->training_code }}" id="training-code-input">
+                <input type="hidden" id="training-subjects" value="{{ json_encode($training->subjects->pluck('subject_id')) }}">
             </div>
             <div class="info-card">
                 <h6>Title</h6>
@@ -161,29 +162,38 @@ use App\Helpers\StatusHelper;
                     </div>
                     <div class="modal-body">
                         <form id="phase-form" class="needs-validation" novalidate>
+                            <input type="hidden" name="training_code" value="{{ $training->training_code }}">
+                            
                             <!-- Basic Training Information -->
                             <div class="row g-3 mb-3">
-                                <div class="col-md-12">
+                                <div class="col-md-6">
                                     <label class="form-label">Title <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" name="title" required disabled>
-                                    <div class="invalid-feedback"></div>
+                                    <input type="text" class="form-control" name="title" required>
+                                    <div class="invalid-feedback">Please provide a title.</div>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">Organization <span class="text-danger">*</span></label>
-                                    <select class="form-select select2" name="organization_id" required>
-                                        <option value="">Select Organization</option>
-                                        @if(isset($organizations))
-                                            @foreach($organizations as $org)
-                                                <option value="{{ $org->organization_id }}">{{ $org->name }}</option>
-                                            @endforeach
-                                        @endif
-                                    </select>
-                                    <div class="invalid-feedback"></div>
+                                    <label class="form-label">Maximum Participants <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" name="max_participants" required>
+                                    <div class="invalid-feedback">Please specify maximum participants.</div>
                                 </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Education Level <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-select" name="education_level" required id="education_level">
-                                    <div class="invalid-feedback"></div>
+                            </div>
+                            
+                            <!-- Dates and Time -->
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-4">
+                                    <label class="form-label">Start Date <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" name="start_date" required>
+                                    <div class="invalid-feedback">Please select a start date.</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">End Date <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" name="end_date" required>
+                                    <div class="invalid-feedback">Please select an end date.</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Start Time <span class="text-danger">*</span></label>
+                                    <input type="time" class="form-control" name="start_time" required>
+                                    <div class="invalid-feedback">Please specify the start time.</div>
                                 </div>
                             </div>
 
@@ -193,87 +203,50 @@ use App\Helpers\StatusHelper;
                                     <label class="form-label">Training Phase <span class="text-danger">*</span></label>
                                     <select class="form-select" name="training_phase" required>
                                         <option value="">Select Phase</option>
-                                        <option value="1">Phase 1</option>
-                                        <option value="2">Phase 2</option>
-                                        <option value="3">Phase 3</option>
-                                        <option value="4">Phase 4</option>
-                                        <option value="5">Phase 5</option>
-                                        <option value="6">Phase 6</option>
-                                        <option value="7">Phase 7</option>
-                                        <option value="8">Phase 8</option>
-                                        <option value="9">Phase 9</option>
-                                        <option value="10">Phase 10</option>
+                                        @for($i = 1; $i <= 10; $i++)
+                                            <option value="{{ $i }}">Phase {{ $i }}</option>
+                                        @endfor
                                     </select>
-                                    <div class="invalid-feedback"></div>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Maximum Participants <span class="text-danger">*</span></label>
-                                    <input type="number" class="form-control" name="max_participants" required min="1">
-                                    <div class="invalid-feedback"></div>
+                                    <div class="invalid-feedback">Please select a phase number</div>
                                 </div>
                                 <div class="col-md-12">
                                     <label class="form-label">Description <span class="text-danger">*</span></label>
-                                    <textarea class="form-control" name="description" rows="3" required></textarea>
-                                    <div class="invalid-feedback"></div>
-                                </div>
-                            </div>
-
-                            <!-- Schedule -->
-                            <div class="row g-3 mb-3">
-                                <div class="col-md-4">
-                                    <label class="form-label">Start Date <span class="text-danger">*</span></label>
-                                    <input type="date" class="form-control" name="start_date" id="start_date" required>
-                                    <div class="invalid-feedback"></div>
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label">End Date <span class="text-danger">*</span></label>
-                                    <input type="date" class="form-control" name="end_date" id="end_date" required>
-                                    <div class="invalid-feedback"></div>
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label">Start Time <span class="text-danger">*</span></label>
-                                    <input type="time" class="form-control" name="start_time" required>
-                                    <div class="invalid-feedback"></div>
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label">Duration (Days)</label>
-                                    <input type="number" class="form-control" name="duration_days" id="duration_days" readonly>
-                                    <div class="invalid-feedback"></div>
+                                    <textarea class="form-control" rows="3" disabled>{{ $training->description }}</textarea>
+                                    <input type="hidden" name="description" value="{{ $training->description }}">
+                                    <div class="invalid-feedback">Please provide a description for this phase</div>
                                 </div>
                             </div>
 
                             <!-- Location -->
                             <div class="row g-3 mb-3">
-                                <div class="col-md-4">
+                                <div class="col-md-6">
                                     <label class="form-label">Region <span class="text-danger">*</span></label>
-                                    <select class="form-select select2" name="region_id" id="region" required>
+                                    <select class="form-select select2" name="region_id" required>
                                         <option value="">Select Region</option>
-                                        @if(isset($regions))
-                                            @foreach($regions as $region)
-                                                <option value="{{ $region->region_id }}">{{ $region->region_name }}</option>
-                                            @endforeach
-                                        @endif
+                                        @foreach($regions as $region)
+                                            <option value="{{ $region->region_id }}">{{ $region->region_name }}</option>
+                                        @endforeach
                                     </select>
-                                    <div class="invalid-feedback"></div>
+                                    <div class="invalid-feedback">Please select a region</div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-6">
                                     <label class="form-label">District <span class="text-danger">*</span></label>
-                                    <select class="form-select select2" name="district_id" id="district" required disabled>
+                                    <select class="form-select select2" name="district_id" required disabled>
                                         <option value="">Select District</option>
                                     </select>
-                                    <div class="invalid-feedback"></div>
+                                    <div class="invalid-feedback">Please select a district</div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-6">
                                     <label class="form-label">Ward <span class="text-danger">*</span></label>
-                                    <select class="form-select select2" name="ward_id" id="ward" required disabled>
+                                    <select class="form-select select2" name="ward_id" required disabled>
                                         <option value="">Select Ward</option>
                                     </select>
-                                    <div class="invalid-feedback"></div>
+                                    <div class="invalid-feedback">Please select a ward</div>
                                 </div>
-                                <div class="col-md-12">
+                                <div class="col-md-6">
                                     <label class="form-label">Venue Name <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" name="venue_name" required>
-                                    <div class="invalid-feedback"></div>
+                                    <div class="invalid-feedback">Please enter the venue name</div>
                                 </div>
                             </div>
 
@@ -281,14 +254,12 @@ use App\Helpers\StatusHelper;
                             <div class="row g-3 mb-3">
                                 <div class="col-md-12">
                                     <label class="form-label">Subjects <span class="text-danger">*</span></label>
-                                    <select class="form-select select2" name="subjects[]" multiple required disabled>
-                                        @if(isset($subjects))
-                                            @foreach($subjects as $subject)
-                                                <option value="{{ $subject->subject_id }}">{{ $subject->subject_name }}</option>
-                                            @endforeach
-                                        @endif
+                                    <select class="form-select select2" multiple name="subjects[]" required>
+                                        @foreach($subjects as $subject)
+                                            <option value="{{ $subject->subject_id }}">{{ $subject->subject_name }}</option>
+                                        @endforeach
                                     </select>
-                                    <div class="invalid-feedback"></div>
+                                    <div class="invalid-feedback">Please select at least one subject</div>
                                 </div>
                             </div>
                         </form>

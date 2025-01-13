@@ -14,8 +14,9 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
 
-    protected $primaryKey = 'id';
-    protected $keyType = 'integer';
+    protected $primaryKey = 'user_id';
+    protected $keyType = 'string';
+    public $incrementing = false;
 
     /**
      * The attributes that are mass assignable.
@@ -94,7 +95,7 @@ class User extends Authenticatable
     public function facilitatedTrainings()
     {
         return $this->belongsToMany(Training::class, 'training_facilitators', 'user_id', 'training_id')
-                    ->withPivot('status')
+                    ->withPivot('status', 'attendance_status', 'report_file')
                     ->withTimestamps();
     }
 

@@ -15,16 +15,16 @@ class AdminMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (!auth()->check() || auth()->user()->role !== 'admin') {
+        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'super_administrator'])) {
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Unauthorized. Admin access required.'
+                    'message' => 'Unauthorized. Administrative access required.'
                 ], 403);
             }
             
-            return redirect()->route('dashboard')
-                ->with('error', 'Unauthorized. Admin access required.');
+            return redirect()->route('login.role', 'admin')
+                ->with('error', 'Please login with administrative credentials to access this area.');
         }
 
         return $next($request);

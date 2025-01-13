@@ -18,12 +18,39 @@
             --primary-color: #009c95;
             --secondary-color: #cc3344;
             --hover-color: #007c77;
-            --text-color: #333;
-            --light-bg: #f8f9fa;
-            --border-color: #dee2e6;
-            --nav-height: 64px;
-            --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
-            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+            --hover-dark: #006c68;
+            --light-bg: #f8f8f8;
+            --navbar-height: 70px;
+            --container-max-width: 1200px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--light-bg);
+            margin: 0;
+            padding: 0;
+        }
+
+        .navbar {
+            background-color: var(--primary-color);
+            transition: all 0.3s ease;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1020;
+            min-height: var(--navbar-height);
+            padding: 0.625rem 0;
+            margin: 0;
+        }
+
+        .main-content {
+            margin-top: var(--navbar-height);
         }
 
         /* Reset and Base Styles */
@@ -38,7 +65,8 @@
             line-height: 1.6;
             color: var(--text-color);
             background-color: var(--light-bg);
-            padding-top: var(--nav-height);
+            padding-top: calc(var(--nav-height));
+            margin: 0;
         }
 
         /* Navigation Styles */
@@ -1436,33 +1464,33 @@
         </div>
     </nav>
 
-    <!-- Side Navigation -->
-    <div class="progress-sidenav">
-        <div class="progress-section">
-            <div class="progress-title">
-                Profile Progress
-            </div>
-            <div class="progress-circle-container">
-                <div class="progress-circle">
-                    <div class="progress-circle-inner">
-                        <div class="progress-value">11%</div>
-                        <div class="progress-text">completed</div>
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Side Navigation -->
+        <div class="progress-sidenav">
+            <div class="progress-section">
+                <div class="progress-title">
+                    Profile Progress
+                </div>
+                <div class="progress-circle-container">
+                    <div class="progress-circle">
+                        <div class="progress-circle-inner">
+                            <div class="progress-value">11%</div>
+                            <div class="progress-text">completed</div>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="progress-info">
-                <h5>Basic Information</h5>
-                <p>Step 1 of 7</p>
-            </div>
-            <div class="remaining-fields">
-                <i class="fas fa-exclamation-triangle"></i>
-                <span>16 fields remaining</span>
+                <div class="progress-info">
+                    <h5>Basic Information</h5>
+                    <p>Step 1 of 7</p>
+                </div>
+                <div class="remaining-fields">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>16 fields remaining</span>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Main Content -->
-    <div class="main-wrapper d-flex align-items-center justify-content-center min-vh-100">
         <div class="container w-640">
             <!-- First Form -->
             <div class="form-section" id="basicInfoForm">

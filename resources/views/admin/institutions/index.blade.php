@@ -5,7 +5,7 @@
 @section('content')
 @push('styles')
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <link rel="stylesheet" href="//cdn.datatables.net/2.2.0/css/dataTables.dataTables.min.css">
+    <link rel="stylesheet" href="//cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
     <link rel="stylesheet" href="//cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
@@ -29,69 +29,80 @@
         .dataTables_wrapper {
             padding: 1rem 0;
         }
+        .dataTables_length {
+            margin-bottom: 1rem;
+        }
+        .dataTables_filter {
+            margin-bottom: 1rem;
+        }
+        .dataTables_info {
+            font-size: 0.875rem;
+            color: #6c757d;
+        }
+        .dataTables_paginate {
+            margin-top: 1rem;
+        }
+        .paginate_button {
+            padding: 0.375rem 0.75rem;
+            margin: 0 0.125rem;
+            border: 1px solid #dee2e6;
+            border-radius: 0.25rem;
+            color: #007bff;
+            cursor: pointer;
+        }
+        .paginate_button.current {
+            background-color: #007bff;
+            border-color: #007bff;
+            color: white;
+        }
         .dt-buttons {
             margin-bottom: 1rem;
             gap: 0.5rem;
             display: inline-flex;
         }
         .dt-button {
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            padding: 0.5rem 1rem !important;
+            padding: 0.375rem 0.75rem !important;
+            border: 1px solid #dee2e6 !important;
+            border-radius: 0.25rem !important;
+            color: #6c757d !important;
+            background: white !important;
             font-size: 0.875rem !important;
-            border-radius: 4px !important;
-            border: none !important;
-            margin: 0 !important;
-            transition: all 0.2s !important;
         }
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1050;
-            left: 0;
+        .dt-button:hover {
+            color: #007bff !important;
+            border-color: #007bff !important;
+            background: #f8f9fa !important;
+        }
+        .table-loading-overlay {
+            position: absolute;
             top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0,0,0,0.5);
-            overflow-y: auto;
-        }
-        .modal-content {
-            background-color: #fefefe;
-            margin: 2% auto;
-            padding: 20px;
-            border: 1px solid #888;
-            width: 95%;
-            max-width: 1200px;
-            border-radius: 8px;
-            position: relative;
-        }
-        .modal-header {
-            background-color: #f8f9fa;
-            margin: -20px -20px 20px -20px;
-            padding: 15px 20px;
-            border-bottom: 1px solid #dee2e6;
-            border-radius: 8px 8px 0 0;
-            display: flex;
+            background: rgba(255, 255, 255, 0.8);
+            z-index: 1000;
+            display: none;
+            justify-content: center;
             align-items: center;
-            justify-content: space-between;
         }
-        .modal-body {
-            max-height: calc(100vh - 200px);
-            overflow-y: auto;
-            padding: 0 10px;
+        .loader {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 4px solid #3498db;
+            animation: spin 1s linear infinite;
         }
-        .close-modal {
-            position: absolute;
-            right: 20px;
-            top: 15px;
-            font-size: 24px;
-            cursor: pointer;
-            color: #888;
-            transition: color 0.2s;
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
-        .close-modal:hover {
-            color: #333;
+        .loading-text {
+            display: block;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
         }
         /* Table Styles */
         .table {
@@ -327,64 +338,49 @@
 @endsection
 
 @push('scripts')
-    <script src="//cdn.datatables.net/2.2.0/js/jquery.dataTables.min.js"></script>
+    <script src="//cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
     <script src="//cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
     <script src="//cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
     <script src="//cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.2/dist/sweetalert2.all.min.js"></script>
+
     <script>
     $(document).ready(function() {
-        $.ajaxSetup({
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            }
-        });
-
         // Initialize DataTable
-        var table = $('#institutions-table').DataTable({
+        let table = $('#institutions-table').DataTable({
+            lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+            order: [[0, "desc"]],
+            processing: true,
+            language: {
+                processing: '<div class="loader"></div><span class="loading-text">Loading data...</span>'
+            },
             dom: 'Bfrtip',
             buttons: [
-                {
-                    extend: 'excel',
-                    text: '<i class="fas fa-file-excel"></i> Excel',
-                    className: 'btn btn-success'
-                },
-                {
-                    extend: 'pdf',
-                    text: '<i class="fas fa-file-pdf"></i> PDF',
-                    className: 'btn btn-danger'
-                },
-                {
-                    extend: 'print',
-                    text: '<i class="fas fa-print"></i> Print',
-                    className: 'btn btn-info'
-                }
-            ],
-            pageLength: 10,
-            order: [[1, 'asc']],
-            language: {
-                search: "_INPUT_",
-                searchPlaceholder: "Search...",
-                lengthMenu: "_MENU_ records per page",
-                info: "Showing _START_ to _END_ of _TOTAL_ records",
-                infoEmpty: "No records available",
-                infoFiltered: "(filtered from _MAX_ total records)",
-                zeroRecords: "No matching records found"
-            }
+                'copy', 'csv', 'excel', 'pdf', 'print'
+            ]
         });
 
-        // Apply filters
+        // Filter handling
         $('#search-filter').on('keyup', function() {
             table.search(this.value).draw();
         });
 
-        $('#type-filter').on('change', function() {
-            table.column(2).search(this.value).draw();
-        });
+        $('#type-filter, #status-filter').on('change', function() {
+            let typeVal = $('#type-filter').val();
+            let statusVal = $('#status-filter').val();
 
-        $('#status-filter').on('change', function() {
-            table.column(5).search(this.value).draw();
+            // Clear all filters first
+            table.columns().search('').draw();
+
+            // Apply filters if values exist
+            if (typeVal) table.column(1).search(typeVal);
+            if (statusVal) table.column(5).search(statusVal);
+
+            table.draw();
         });
     });
 

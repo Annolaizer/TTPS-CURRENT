@@ -3,17 +3,18 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\InstitutionController;
+use App\Http\Controllers\Admin\TeacherController as AdminTeacherController;
 use App\Http\Controllers\Admin\TrainingController;
 use App\Http\Controllers\Admin\TrainingAssignmentController;
-use App\Http\Controllers\Admin\TeacherController as AdminTeacherController;
+use App\Http\Controllers\Admin\UserManagementController;
+use App\Http\Controllers\Organization\DashboardController as OrganizationDashboardController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\Teacher\DashboardController as TeacherDashboardController;
 use App\Http\Controllers\Teacher\SettingsController as TeacherSettingsController;
 use App\Http\Controllers\CpdFacilitator\DashboardController as CpdFacilitatorDashboardController;
 use App\Http\Controllers\CpdFacilitator\SettingsController as CpdFacilitatorSettingsController;
-use App\Http\Controllers\Organization\DashboardController as OrganizationDashboardController;
 use App\Http\Controllers\Organization\TrainingController as OrganizationTrainingController;
-use App\Http\Controllers\Admin\InstitutionController;
 use App\Http\Controllers\QualifiedTeacherController;
 use App\Http\Controllers\QualifiedFacilitatorsController;
 use App\Http\Controllers\TeacherProfileController;
@@ -60,6 +61,7 @@ Route::prefix('trainings')->name('trainings.')->group(function () {
     
     Route::post('/{trainingCode}/assign-teachers', [TrainingAssignmentController::class, 'assignTeachers'])->name('teachers.assign');
     Route::post('/{trainingCode}/assign-facilitators', [TrainingAssignmentController::class, 'assignFacilitators'])->name('facilitators.assign');
+    Route::post('/{trainingCode}/assign-training-participants', [TrainingAssignmentController::class, 'assignParticipants'])->name('participants.assign');
     
     Route::delete('/{trainingCode}/remove-teacher/{teacherId}', [TrainingAssignmentController::class, 'removeTeacher'])->name('teachers.remove');
     Route::delete('/{trainingCode}/remove-facilitator/{facilitatorId}', [TrainingAssignmentController::class, 'removeFacilitator'])->name('facilitators.remove');
@@ -166,11 +168,23 @@ Route::middleware('auth')->group(function () {
 });
 
 // Admin routes
-Route::prefix('admin')->name('admin.')->group(function () {
+Route::prefix('admin')
+    ->name('admin.')
+    ->middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
+    ->group(function () {
     // Dashboard
-    Route::get('/dashboard', function () {
-        return view('admin.dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+    
+    // User Management routes
+    Route::prefix('users')->name('users.')->group(function () {
+        Route::get('/', [UserManagementController::class, 'index'])->name('index');
+        Route::get('/data', [UserManagementController::class, 'getUsers'])->name('data');
+        Route::get('/{userId}/edit', [UserManagementController::class, 'edit'])->name('edit');
+        Route::post('/', [UserManagementController::class, 'store'])->name('store');
+        Route::put('/{userId}', [UserManagementController::class, 'update'])->name('update');
+        Route::post('/{userId}/toggle-status', [UserManagementController::class, 'toggleStatus'])->name('toggle-status');
+        Route::delete('/{userId}', [UserManagementController::class, 'destroy'])->name('destroy');
+    });
 
     // Institution routes
     Route::get('/institutions', [InstitutionController::class, 'index'])->name('institutions.index');
@@ -185,12 +199,15 @@ Route::prefix('admin')->name('admin.')->group(function () {
     })->where('path', '.*');
 
     // Teachers routes
-    Route::get('/teachers', [AdminTeacherController::class, 'index'])->name('teachers.index');
-    Route::get('/teachers/{teacherId}', [AdminTeacherController::class, 'show'])->name('teachers.show');
-    Route::get('/teachers/{teacherId}/edit', [AdminTeacherController::class, 'edit'])->name('teachers.edit');
-    Route::put('/teachers/{teacherId}', [AdminTeacherController::class, 'update'])->name('teachers.update');
-    Route::post('/teachers/{teacherId}/toggle-status', [AdminTeacherController::class, 'toggleStatus'])->name('teachers.toggle-status');
-    
+    Route::prefix('teachers')->name('teachers.')->group(function () {
+        Route::get('/', [AdminTeacherController::class, 'index'])->name('index');
+        Route::get('/{user_id}', [AdminTeacherController::class, 'show'])->name('show');
+        Route::get('/{user_id}/edit', [AdminTeacherController::class, 'edit'])->name('edit');
+        Route::put('/{user_id}', [AdminTeacherController::class, 'update'])->name('update');
+        Route::post('/{user_id}/toggle-status', [AdminTeacherController::class, 'toggleStatus'])->name('toggle-status');
+        Route::post('/verify-completed', [AdminTeacherController::class, 'verifyCompleted'])->name('verify-completed');
+    });
+
     // Training routes
     Route::prefix('trainings')->name('trainings.')->group(function () {
         Route::get('/', [TrainingController::class, 'index'])->name('index');

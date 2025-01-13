@@ -612,3 +612,86 @@ body {
     margin: 0;
     border-top: 1px solid rgba(0, 0, 0, 0.06);
 }
+
+/* User Profile Dropdown */
+.user-profile-dropdown {
+    width: 250px;
+    padding: 0;
+    border: none;
+    box-shadow: 0 5px 25px rgba(0,0,0,0.15);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-top: 12px;
+    animation: dropdownFade 0.2s ease-out;
+}
+
+.user-profile-dropdown .dropdown-header {
+    background-color: var(--primary-color);
+    padding: 15px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.user-profile-dropdown .user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: white;
+}
+
+.user-profile-dropdown .user-info i {
+    font-size: 2.5rem;
+    color: rgba(255,255,255,0.9);
+}
+
+.user-profile-dropdown .user-info h6 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: white;
+}
+
+.user-profile-dropdown .user-info small {
+    color: rgba(255,255,255,0.8);
+    font-size: 12px;
+}
+
+.user-profile-dropdown .dropdown-item {
+    padding: 12px 15px;
+    font-size: 13px;
+    color: #444;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    transition: all 0.2s;
+}
+
+.user-profile-dropdown .dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.user-profile-dropdown .dropdown-item i {
+    width: 20px;
+    margin-right: 8px;
+    color: #666;
+}
+
+.user-profile-dropdown .dropdown-item:hover {
+    background-color: rgba(0,0,0,0.03);
+    color: var(--primary-color);
+}
+
+.user-profile-dropdown .dropdown-item:hover i {
+    color: var(--primary-color);
+}
+
+.user-profile-dropdown .dropdown-divider {
+    margin: 0;
+    border-top: 1px solid rgba(0,0,0,0.05);
+}
+
+.nav-icon:hover {
+    opacity: 0.8;
+}
+
+.nav-icon i {
+    color: white;
+    font-size: 1.5rem;
+}

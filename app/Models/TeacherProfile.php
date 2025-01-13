@@ -43,7 +43,7 @@ class TeacherProfile extends Model
     public function trainings()
     {
         return $this->belongsToMany(Training::class, 'training_teachers', 'teacher_id', 'training_id')
-                    ->withPivot('status')
+                    ->withPivot('status', 'attendance_status', 'report_file')
                     ->withTimestamps();
     }
 

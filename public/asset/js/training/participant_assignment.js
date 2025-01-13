@@ -92,19 +92,29 @@ $(document).ready(function() {
         $('#teachers-content').html('<div class="text-center py-3"><div class="spinner-border text-primary" role="status"></div></div>');
         
         $.ajax({
-            url: `/qualified-teachers/${trainingCode}`,
+            url: `/trainings/${trainingCode}/available-teachers`,
             method: 'GET',
             data: { region_id: regionId },
             success: function(response) {
                 if (response.status === 'success') {
                     renderTeachers(response.data);
                 } else {
-                    $('#teachers-content').html('<div class="alert alert-danger">Failed to load teachers</div>');
+                    $('#teachers-content').html(`
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            ${response.message || 'No qualified teachers found'}
+                        </div>
+                    `);
                 }
             },
             error: function(xhr) {
-                const message = xhr.responseJSON?.message || 'Error loading teachers.';
-                $('#teachers-content').html(`<div class="alert alert-danger">${message}</div>`);
+                console.error('Error loading teachers:', xhr);
+                $('#teachers-content').html(`
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        ${xhr.responseJSON?.message || 'Failed to load qualified teachers. Please try again.'}
+                    </div>
+                `);
             }
         });
     });
@@ -114,13 +124,22 @@ $(document).ready(function() {
         if (!data.teachers || data.teachers.length === 0) {
             $('#teachers-content').html(`
                 <div class="text-center text-muted py-4">
-                    <i class="fas fa-search fa-2x mb-2"></i>
-                    <p class="mb-0">No teachers found for the selected criteria</p>
-                    ${$('#region_filter').val() ? '<small>Try selecting a different region or view all regions</small>' : ''}
+                    <i class="fas fa-user-slash fa-2x mb-2"></i>
+                    <p class="mb-0">No available teachers found</p>
+                    <small class="d-block mt-2">Possible reasons:</small>
+                    <ul class="list-unstyled small">
+                        <li>• Teachers are already assigned to other trainings during this period</li>
+                        <li>• Teachers have reached their training participation limit for this year</li>
+                        <li>• No teachers match the required education level</li>
+                    </ul>
+                    ${$('#region_filter').val() ? '<small class="d-block mt-2">Try selecting a different region or view all regions</small>' : ''}
                 </div>
             `);
             return;
         }
+
+        const maxParticipants = parseInt($('#max-participants').val()) || 0;
+        const currentSelected = $('#teachers-content input[type="checkbox"]:checked').length;
 
         const content = data.teachers.map(teacher => `
             <div class="teacher-item p-2 border-bottom">
@@ -129,7 +148,8 @@ $(document).ready(function() {
                         <input type="checkbox" class="form-check-input teacher-checkbox" 
                                value="${teacher.id}" 
                                id="teacher-${teacher.id}"
-                               ${selectedTeachers.has(teacher.id) ? 'checked' : ''}>
+                               ${selectedTeachers.has(teacher.id) ? 'checked' : ''}
+                               ${(currentSelected >= maxParticipants && !selectedTeachers.has(teacher.id)) ? 'disabled' : ''}>
                         <label class="form-check-label" for="teacher-${teacher.id}">
                             ${teacher.name}
                         </label>
@@ -151,7 +171,19 @@ $(document).ready(function() {
             </div>
         `).join('');
 
-        $('#teachers-content').html(content);
+        $('#teachers-content').html(`
+            <div class="alert alert-info mb-3">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>Note:</strong> Only showing teachers who:
+                <ul class="mb-0 mt-1">
+                    <li>Have no schedule conflicts with this training</li>
+                    <li>Haven't exceeded their training participation limit</li>
+                    <li>Match the required education level</li>
+                </ul>
+            </div>
+            ${content}
+        `);
+        
         updateTeacherCount();
         updateSelectAllState();
     }
@@ -370,14 +402,14 @@ $(document).ready(function() {
                 // Prepare data for submission
                 const formData = {
                     training_code: trainingCode,
-                    teachers: selectedTeachers,
-                    facilitators: selectedFacilitators,
+                    teacher_ids: Array.from(selectedTeachers),
+                    facilitator_ids: Array.from(selectedFacilitators),
                     _token: $('meta[name="csrf-token"]').attr('content')
                 };
 
                 // Submit assignment
                 $.ajax({
-                    url: '/assign-training-participants',
+                    url: `/trainings/${trainingCode}/assign-training-participants`,
                     method: 'POST',
                     data: formData,
                     success: function(response) {

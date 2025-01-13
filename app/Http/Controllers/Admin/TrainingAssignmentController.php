@@ -15,6 +15,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\DataTables;
 use FPDF;
 
@@ -61,31 +62,50 @@ class TrainingAssignmentController extends Controller
 
         // Apply region filter if provided
         if ($request->filled('region_id')) {
-            $query->whereHas('school', function($q) use ($request) {
-                $q->whereHas('ward', function($q) use ($request) {
-                    $q->whereHas('district', function($q) use ($request) {
-                        $q->where('region_id', $request->region_id);
-                    });
+            $query->whereHas('ward', function($q) use ($request) {
+                $q->whereHas('district', function($q) use ($request) {
+                    $q->where('region_id', $request->region_id);
                 });
             });
         }
 
         // Get teachers with all necessary relationships
-        $teachers = $query->with(['user', 'school.ward.district.region'])
-            ->get()
-            ->map(function($teacher) {
-                return [
-                    'id' => $teacher->teacher_id,
-                    'name' => $teacher->user->name,
-                    'registration_number' => $teacher->registration_number,
-                    'education_level' => $teacher->education_level,
-                    'years_of_experience' => $teacher->years_of_experience,
-                    'current_school' => $teacher->school->name,
-                    'ward_name' => $teacher->school->ward->name,
-                    'district_name' => $teacher->school->ward->district->name,
-                    'region_name' => $teacher->school->ward->district->region->region_name
-                ];
-            });
+        $teachers = $query->with(['user', 'ward.district.region'])
+            ->get();
+
+        // Debug log
+        \Log::info('Teachers data:', $teachers->map(function($teacher) {
+            return [
+                'teacher_id' => $teacher->teacher_id,
+                'ward_id' => $teacher->ward_id,
+                'ward' => $teacher->ward ? [
+                    'ward_id' => $teacher->ward->ward_id,
+                    'ward_name' => $teacher->ward->ward_name,
+                    'district' => $teacher->ward->district ? [
+                        'district_id' => $teacher->ward->district->district_id,
+                        'district_name' => $teacher->ward->district->district_name,
+                        'region' => $teacher->ward->district->region ? [
+                            'region_id' => $teacher->ward->district->region->region_id,
+                            'region_name' => $teacher->ward->district->region->region_name
+                        ] : null
+                    ] : null
+                ] : null
+            ];
+        })->toArray());
+
+        $teachers = $teachers->map(function($teacher) {
+            return [
+                'id' => $teacher->teacher_id,
+                'name' => $teacher->user->name,
+                'registration_number' => $teacher->registration_number,
+                'education_level' => $teacher->education_level,
+                'years_of_experience' => $teacher->years_of_experience,
+                'current_school' => $teacher->current_school,
+                'ward_name' => $teacher->ward ? $teacher->ward->ward_name : null,
+                'district_name' => $teacher->ward && $teacher->ward->district ? $teacher->ward->district->district_name : null,
+                'region_name' => $teacher->ward && $teacher->ward->district && $teacher->ward->district->region ? $teacher->ward->district->region->region_name : null
+            ];
+        });
 
         return response()->json([
             'status' => 'success',
@@ -107,10 +127,10 @@ class TrainingAssignmentController extends Controller
         $facilitators = User::where('role', 'cpd_facilitator')
             ->where('status', 'active')
             ->whereDoesntHave('facilitatedTrainings', function($query) use ($training) {
-                $query->where('trainings.training_id', $training->training_id)
+                $query->where('ft.training_id', $training->training_id)
                       ->orWhere(function($q) use ($training) {
-                          $q->where('trainings.start_date', '<=', $training->end_date)
-                            ->where('trainings.end_date', '>=', $training->start_date);
+                          $q->where('ft.start_date', '<=', $training->end_date)
+                            ->where('ft.end_date', '>=', $training->start_date);
                       });
             })
             ->get()
@@ -143,12 +163,12 @@ class TrainingAssignmentController extends Controller
         }
 
         // Check if teacher is already assigned
-        if ($training->teachers()->where('teacher_id', $teacherId)->exists()) {
+        if ($training->teachers()->where('training_teachers.teacher_id', $teacherId)->exists()) {
             return response()->json(['message' => 'Teacher is already assigned to this training'], 422);
         }
 
         // Check if maximum participants limit is reached
-        if ($training->teachers()->count() >= $training->maximum_participants) {
+        if ($training->teachers()->count() >= $training->max_participants) {
             return response()->json(['message' => 'Maximum participants limit reached'], 422);
         }
 
@@ -177,7 +197,7 @@ class TrainingAssignmentController extends Controller
             ->firstOrFail();
 
         // Check if facilitator is already assigned
-        if ($training->facilitators()->where('user_id', $facilitatorId)->exists()) {
+        if ($training->facilitators()->where('training_facilitators.user_id', $facilitatorId)->exists()) {
             return response()->json(['message' => 'Facilitator is already assigned to this training'], 422);
         }
 
@@ -324,10 +344,19 @@ class TrainingAssignmentController extends Controller
     public function updatePhase(Request $request, $trainingCode)
     {
         try {
+            Log::info('Starting training phase creation', [
+                'training_code' => $trainingCode,
+                'request_data' => $request->except(['_token'])
+            ]);
+
             $training = Training::where('training_code', $trainingCode)->firstOrFail();
             
             // Check if current training phase is completed
             if ($training->status !== 'completed') {
+                Log::warning('Cannot create phase - training not completed', [
+                    'training_code' => $trainingCode,
+                    'current_status' => $training->status
+                ]);
                 return response()->json([
                     'success' => false,
                     'message' => 'Cannot create new phase. Current training phase must be completed first.'
@@ -335,7 +364,7 @@ class TrainingAssignmentController extends Controller
             }
             
             // Validate request
-            $request->validate([
+            $validated = $request->validate([
                 'start_date' => 'required|date',
                 'end_date' => 'required|date|after_or_equal:start_date',
                 'start_time' => 'required',
@@ -344,15 +373,22 @@ class TrainingAssignmentController extends Controller
                 'venue_name' => 'required|string'
             ]);
             
+            Log::info('Request validation passed', ['validated_data' => $validated]);
+            
             // Check for existing training with same phase
+            $nextPhaseNumber = ($training->training_phase ?? 0) + 1;
             $existingPhase = Training::where('training_code', 'like', $trainingCode . '%')
-                ->where('training_phase', ($training->training_phase ?? 0) + 1)
+                ->where('training_phase', $nextPhaseNumber)
                 ->first();
                 
             if ($existingPhase) {
+                Log::warning('Phase already exists', [
+                    'training_code' => $trainingCode,
+                    'phase_number' => $nextPhaseNumber
+                ]);
                 return response()->json([
                     'success' => false,
-                    'message' => 'Training phase ' . ($training->training_phase ?? 0) + 1 . ' already exists'
+                    'message' => "Training phase {$nextPhaseNumber} already exists"
                 ], 400);
             }
 
@@ -362,6 +398,10 @@ class TrainingAssignmentController extends Controller
                 ->first();
                 
             if ($pendingPhase) {
+                Log::warning('Cannot create phase - pending/ongoing phase exists', [
+                    'training_code' => $trainingCode,
+                    'pending_phase' => $pendingPhase->training_code
+                ]);
                 return response()->json([
                     'success' => false,
                     'message' => 'Cannot create new phase. There is already a pending or ongoing phase.'
@@ -370,19 +410,25 @@ class TrainingAssignmentController extends Controller
 
             // Generate new training code with phase suffix
             $baseCode = preg_replace('/-P\d+$/', '', $trainingCode); // Remove any existing phase suffix
-            $newTrainingCode = $baseCode . '-P' . (($training->training_phase ?? 0) + 1);
+            $newTrainingCode = $baseCode . '-P' . $nextPhaseNumber;
+
+            Log::info('Creating new training phase', [
+                'base_code' => $baseCode,
+                'new_code' => $newTrainingCode,
+                'phase_number' => $nextPhaseNumber
+            ]);
 
             // Create new training record with incremented phase
             $newTraining = $training->replicate();
             $newTraining->training_code = $newTrainingCode;
-            $newTraining->training_phase = ($training->training_phase ?? 0) + 1;
+            $newTraining->training_phase = $nextPhaseNumber;
             $newTraining->start_date = $request->start_date;
             $newTraining->end_date = $request->end_date;
             $newTraining->start_time = $request->start_time;
             $newTraining->max_participants = $request->max_participants;
             $newTraining->description = $request->description;
             $newTraining->venue_name = $request->venue_name;
-            $newTraining->status = 'pending'; // Set default status to pending
+            $newTraining->status = 'pending';
             $newTraining->verified_at = null;
             $newTraining->verified_by = null;
             $newTraining->rejected_at = null;
@@ -390,12 +436,40 @@ class TrainingAssignmentController extends Controller
             $newTraining->rejection_reason = null;
             $newTraining->save();
 
+            Log::info('Training phase created successfully', [
+                'training_code' => $newTraining->training_code,
+                'phase' => $newTraining->training_phase
+            ]);
+
             return response()->json([
                 'success' => true,
                 'message' => 'New training phase created successfully',
                 'phase' => $newTraining->training_phase
             ]);
+        } catch (ValidationException $e) {
+            Log::error('Validation failed while creating training phase', [
+                'training_code' => $trainingCode,
+                'errors' => $e->errors()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (ModelNotFoundException $e) {
+            Log::error('Training not found while creating phase', [
+                'training_code' => $trainingCode
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Training not found'
+            ], 404);
         } catch (\Exception $e) {
+            Log::error('Failed to create training phase', [
+                'training_code' => $trainingCode,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to create training phase: ' . $e->getMessage()
@@ -435,6 +509,100 @@ class TrainingAssignmentController extends Controller
         }
 
         return Storage::disk('public')->download($participant->report_file, 'training_report.pdf');
+    }
+
+    /**
+     * Assign multiple participants (teachers and facilitators) to a training
+     */
+    public function assignParticipants(Request $request, $trainingCode)
+    {
+        try {
+            DB::beginTransaction();
+            
+            $training = Training::where('training_code', $trainingCode)->firstOrFail();
+            $teacherIds = $request->input('teacher_ids', []);
+            $facilitatorIds = $request->input('facilitator_ids', []);
+
+            Log::info('Assigning participants to training', [
+                'training_code' => $trainingCode,
+                'teacher_ids' => $teacherIds,
+                'facilitator_ids' => $facilitatorIds
+            ]);
+
+            // Get count of currently assigned teachers
+            $currentTeacherCount = $training->teachers()->count();
+            
+            // Count new teachers (excluding already assigned ones)
+            $newTeacherCount = count(array_filter($teacherIds, function($teacherId) use ($training) {
+                return !$training->teachers()
+                    ->where('training_teachers.teacher_id', $teacherId)
+                    ->exists();
+            }));
+
+            // Validate maximum participants limit for teachers
+            if (($currentTeacherCount + $newTeacherCount) > $training->max_participants) {
+                Log::warning('Maximum participants limit exceeded', [
+                    'training_code' => $trainingCode,
+                    'current_teachers' => $currentTeacherCount,
+                    'new_teachers' => $newTeacherCount,
+                    'maximum_limit' => $training->max_participants
+                ]);
+                return response()->json([
+                    'status' => 'error',
+                    'message' => sprintf(
+                        'Cannot assign %d new teachers. Current teachers: %d. Maximum limit: %d',
+                        $newTeacherCount,
+                        $currentTeacherCount,
+                        $training->max_participants
+                    )
+                ], 422);
+            }
+
+            // Assign teachers
+            foreach ($teacherIds as $teacherId) {
+                // Skip if teacher is already assigned
+                if (!$training->teachers()->where('training_teachers.teacher_id', $teacherId)->exists()) {
+                    $training->teachers()->attach($teacherId, [
+                        'status' => 'active',
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ]);
+                    Log::info('Teacher assigned', ['teacher_id' => $teacherId]);
+                }
+            }
+
+            // Assign facilitators
+            foreach ($facilitatorIds as $facilitatorId) {
+                // Skip if facilitator is already assigned
+                if (!$training->facilitators()->where('training_facilitators.user_id', $facilitatorId)->exists()) {
+                    $training->facilitators()->attach($facilitatorId, [
+                        'status' => 'active',
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ]);
+                    Log::info('Facilitator assigned', ['facilitator_id' => $facilitatorId]);
+                }
+            }
+
+            DB::commit();
+            Log::info('Assignment completed successfully');
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Participants assigned successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to assign participants', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to assign participants: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     private function checkMoestAndGovernmentTraining($training)

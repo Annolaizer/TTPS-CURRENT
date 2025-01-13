@@ -105,7 +105,7 @@ class Training extends Model
     public function teachers()
     {
         return $this->belongsToMany(TeacherProfile::class, 'training_teachers', 'training_id', 'teacher_id')
-                    ->withPivot('status')
+                    ->withPivot('status', 'attendance_status', 'report_file')
                     ->withTimestamps();
     }
 
@@ -115,7 +115,7 @@ class Training extends Model
     public function facilitators()
     {
         return $this->belongsToMany(User::class, 'training_facilitators', 'training_id', 'user_id')
-                    ->withPivot('status')
+                    ->withPivot('status', 'attendance_status', 'report_file')
                     ->withTimestamps();
     }
 

@@ -5,10 +5,11 @@
 @section('content')
 @push('styles')
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <link rel="stylesheet" href="//cdn.datatables.net/2.2.0/css/dataTables.dataTables.min.css">
+    <link rel="stylesheet" href="//cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
     <link rel="stylesheet" href="//cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <style>
         .filter-input {
             border-radius: 4px;
@@ -24,6 +25,68 @@
         .card {
             border: none;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .btn-xs {
+            width: 24px;
+            height: 24px;
+            padding: 2px;
+            line-height: 20px;
+            text-align: center;
+            margin: 0 1px;
+        }
+        .btn-xs i {
+            font-size: 12px;
+            line-height: 20px;
+            margin: 0;
+            padding: 0;
+            color: white;
+        }
+        /* Loader Styles */
+        .dataTables_processing {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            margin-left: -50%;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            z-index: 1;
+        }
+        .loader {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 4px solid #3498db;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .loading-text {
+            display: block;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+        /* Table loading overlay */
+        .table-loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            z-index: 1000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+        .table-responsive {
+            position: relative;
         }
         /* DataTables Custom Styling */
         .dataTables_wrapper {
@@ -146,8 +209,8 @@
                     <div class="col-md-3">
                         <select class="form-select filter-input" id="status-filter">
                             <option value="">All Status</option>
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
+                            <option value="verified">Verified</option>
+                            <option value="pending">Pending</option>
                         </select>
                     </div>
                 </div>
@@ -156,8 +219,21 @@
 
         <!-- Teachers Table Section -->
         <div class="card shadow-sm">
+            <div class="card-header">
+                <div class="card-tools">
+                    <button onclick="verifyAllTeachers()" class="btn btn-success">
+                        <i class="fas fa-check-double"></i> Verify All Completed
+                    </button>
+                </div>
+            </div>
             <div class="card-body">
                 <div class="table-responsive">
+                    <div class="table-loading-overlay">
+                        <div class="text-center">
+                            <div class="loader"></div>
+                            <span class="loading-text">Loading data...</span>
+                        </div>
+                    </div>
                     <table id="teachers-table" class="table table-hover">
                         <thead>
                             <tr>
@@ -185,26 +261,18 @@
                                             {{ $teacher->status_label }}
                                         </span>
                                     </td>
-                                    <td>
-                                        <div class="btn-group">
-                                            <a href="{{ route('admin.teachers.show', $teacher->teacher_id) }}" 
-                                               class="btn btn-sm btn-outline-info" 
-                                               title="View Details">
-                                                <i class="fas fa-eye"></i>
-                                            </a>
-                                            <a href="{{ route('admin.teachers.edit', $teacher->teacher_id) }}" 
-                                               class="btn btn-sm btn-outline-primary" 
-                                               title="Edit">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
-                                            <button type="button" 
-                                                    class="btn btn-sm btn-outline-{{ $teacher->status === 'active' ? 'warning' : 'success' }} toggle-status"
-                                                    data-teacher-id="{{ $teacher->teacher_id }}"
-                                                    data-current-status="{{ $teacher->status }}"
-                                                    title="{{ $teacher->status === 'active' ? 'Deactivate' : 'Activate' }}">
-                                                <i class="fas fa-{{ $teacher->status === 'active' ? 'ban' : 'check' }}"></i>
+                                    <td class="text-center">
+                                        @if($teacher->status !== 'verified')
+                                            <button onclick="verifyTeacher({{ $teacher->id }})" class="btn btn-success btn-flat btn-xs">
+                                                <i class="fas fa-check"></i>
                                             </button>
-                                        </div>
+                                        @endif
+                                        <a href="{{ route('admin.teachers.edit', ['user_id' => $teacher->user_id]) }}" class="btn btn-warning btn-flat btn-xs">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{{ route('admin.teachers.show', ['user_id' => $teacher->user_id]) }}" class="btn btn-info btn-flat btn-xs">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
                                     </td>
                                 </tr>
                             @empty
@@ -222,7 +290,7 @@
 @endsection
 
 @push('scripts')
-    <script src="//cdn.datatables.net/2.2.0/js/jquery.dataTables.min.js"></script>
+    <script src="//cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
     <script src="//cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
     <script src="//cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
     <script src="//cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
@@ -230,6 +298,8 @@
     <script src="//cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <script>
     $(document).ready(function() {
         $.ajaxSetup({
@@ -238,43 +308,27 @@
             }
         });
 
-        let table = new DataTable('#teachers-table', {
+        // Initialize DataTable
+        let table = $('#teachers-table').DataTable({
+            lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+            order: [[0, "desc"]],
             processing: true,
-            pageLength: 10,
-            lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
-            order: [[1, 'asc']], // Sort by name by default
-            dom: '<"top"<"row"<"col-md-6"B><"col-md-6"f>>><"clear">rt<"bottom"<"row"<"col-md-6"l><"col-md-6"p>>>',
-            buttons: [
-                {
-                    extend: 'excel',
-                    text: '<i class="fas fa-file-excel"></i> Excel',
-                    className: 'btn btn-sm btn-success me-2',
-                    exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6] }
-                },
-                {
-                    extend: 'pdf',
-                    text: '<i class="fas fa-file-pdf"></i> PDF',
-                    className: 'btn btn-sm btn-danger me-2',
-                    exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6] }
-                },
-                {
-                    extend: 'print',
-                    text: '<i class="fas fa-print"></i> Print',
-                    className: 'btn btn-sm btn-info',
-                    exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6] }
-                }
-            ],
             language: {
-                search: "_INPUT_",
-                searchPlaceholder: "Search teachers...",
-                lengthMenu: "_MENU_ records per page",
-                info: "Showing _START_ to _END_ of _TOTAL_ teachers",
-                infoEmpty: "No teachers found",
-                infoFiltered: "(filtered from _MAX_ total records)",
-                processing: '<i class="fas fa-spinner fa-spin"></i> Loading...'
-            }
+                processing: '<div class="loader"></div><span class="loading-text">Loading data...</span>'
+            },
+            drawCallback: function(settings) {
+                $('.table-loading-overlay').hide();
+            },
+            preDrawCallback: function(settings) {
+                $('.table-loading-overlay').css('display', 'flex');
+            },
+            dom: 'Bfrtip',
+            buttons: [
+                'copy', 'csv', 'excel', 'pdf', 'print'
+            ]
         });
 
+        // Filter handling
         $('#search-filter').on('keyup', function() {
             table.search(this.value).draw();
         });
@@ -284,11 +338,13 @@
             let subjectVal = $('#subject-filter').val();
             let statusVal = $('#status-filter').val();
 
+            // Clear all filters first
             table.columns().search('').draw();
 
-            if (educationVal) table.columns(5).search(educationVal);
-            if (subjectVal) table.columns(2).search(subjectVal);
-            if (statusVal) table.columns(6).search(statusVal);
+            // Apply filters if values exist
+            if (educationVal) table.column(5).search(educationVal);
+            if (subjectVal) table.column(2).search(subjectVal);
+            if (statusVal) table.column(6).search(statusVal);
 
             table.draw();
         });
@@ -358,6 +414,172 @@
                 }
             });
         });
+
+        // Single teacher verification
+        $('.verify-teacher').on('click', function() {
+            let teacherId = $(this).data('teacher-id');
+            let button = $(this);
+            
+            Swal.fire({
+                title: 'Verify Teacher?',
+                text: 'Are you sure you want to verify this teacher?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, verify',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: `/admin/teachers/${teacherId}/toggle-status`,
+                        method: 'POST',
+                        data: { status: 'verified' },
+                        beforeSend: function() {
+                            $('.table-loading-overlay').show();
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire('Success', 'Teacher has been verified', 'success');
+                                location.reload();
+                            }
+                        },
+                        error: function() {
+                            Swal.fire('Error', 'Failed to verify teacher', 'error');
+                        },
+                        complete: function() {
+                            $('.table-loading-overlay').hide();
+                        }
+                    });
+                }
+            });
+        });
+
+        // Verify all completed profiles
+        $('.verify-all-btn').on('click', function() {
+            Swal.fire({
+                title: 'Verify All Completed Profiles?',
+                text: 'This will verify all teachers with completed profiles. Continue?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, verify all',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '{{ route("admin.teachers.verify-completed") }}',
+                        method: 'POST',
+                        beforeSend: function() {
+                            $('.table-loading-overlay').show();
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire('Success', 'All completed profiles have been verified', 'success');
+                                location.reload();
+                            }
+                        },
+                        error: function() {
+                            Swal.fire('Error', 'Failed to verify teachers', 'error');
+                        },
+                        complete: function() {
+                            $('.table-loading-overlay').hide();
+                        }
+                    });
+                }
+            });
+        });
     });
+    </script>
+
+    <script>
+        // Common function for showing confirmation dialog
+        function showConfirmDialog(title, text, icon = 'warning') {
+            return Swal.fire({
+                title: title,
+                text: text,
+                icon: icon,
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, verify!',
+                cancelButtonText: 'Cancel'
+            });
+        }
+
+        // Common function for showing result message
+        function showResultMessage(success, message) {
+            Swal.fire(
+                success ? 'Success!' : 'Error!',
+                message,
+                success ? 'success' : 'error'
+            ).then(() => {
+                if (success) window.location.reload();
+            });
+        }
+
+        function verifyTeacher(userId) {
+            showConfirmDialog(
+                'Verify Teacher',
+                'Are you sure you want to verify this teacher?'
+            ).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        type: 'POST',
+                        url: '{{ route("admin.teachers.toggle-status", ["user_id" => "__USER_ID__"]) }}'.replace('__USER_ID__', userId),
+                        data: {
+                            status: 'verified',
+                            _token: '{{ csrf_token() }}'
+                        },
+                        beforeSend: function() {
+                            $('.table-loading-overlay').show();
+                        },
+                        success: function(response) {
+                            showResultMessage(response.success, response.message);
+                        },
+                        error: function(xhr) {
+                            let message = 'Something went wrong while verifying the teacher.';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                message = xhr.responseJSON.message;
+                            }
+                            showResultMessage(false, message);
+                        },
+                        complete: function() {
+                            $('.table-loading-overlay').hide();
+                        }
+                    });
+                }
+            });
+        }
+
+        function verifyAllTeachers() {
+            showConfirmDialog(
+                'Verify All Teachers',
+                'Are you sure you want to verify all teachers with completed profiles?',
+                'question'
+            ).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '{{ route("admin.teachers.verify-completed") }}',
+                        method: 'POST',
+                        data: {
+                            _token: '{{ csrf_token() }}'
+                        },
+                        beforeSend: function() {
+                            $('.table-loading-overlay').show();
+                        },
+                        success: function(response) {
+                            showResultMessage(
+                                response.success,
+                                response.message || 'All completed profiles have been verified'
+                            );
+                        },
+                        error: function() {
+                            showResultMessage(false, 'Failed to verify teachers');
+                        },
+                        complete: function() {
+                            $('.table-loading-overlay').hide();
+                        }
+                    });
+                }
+            });
+        }
     </script>
 @endpush

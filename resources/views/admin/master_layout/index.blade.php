@@ -85,7 +85,7 @@
                             </div>
                         </div>
                         <a class="dropdown-item" href="#">
-                            <i class="fas fa-user"></i> Profile
+                            <i class="fas fa-user"></i> My Profile
                         </a>
                         <a class="dropdown-item" href="#">
                             <i class="fas fa-cog"></i> Settings
@@ -111,6 +111,12 @@
                     <a href="{{ route('test.admin.dashboard') }}" class="nav-link {{ request()->routeIs('test.admin.dashboard') ? 'active' : '' }}">
                         <i class="fas fa-home"></i>
                         <span>Dashboard</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                        <i class="fas fa-users"></i> User Management
                     </a>
                 </li>
 
