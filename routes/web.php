@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\TeacherController as AdminTeacherController;
 use App\Http\Controllers\Admin\TrainingController;
 use App\Http\Controllers\Admin\TrainingAssignmentController;
 use App\Http\Controllers\Admin\UserManagementController;
+use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Organization\DashboardController as OrganizationDashboardController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\Teacher\DashboardController as TeacherDashboardController;
@@ -235,6 +236,13 @@ Route::prefix('admin')
         
         Route::delete('/{trainingCode}/remove-teacher/{teacherId}', [TrainingAssignmentController::class, 'removeTeacher'])->name('teachers.remove');
         Route::delete('/{trainingCode}/remove-facilitator/{facilitatorId}', [TrainingAssignmentController::class, 'removeFacilitator'])->name('facilitators.remove');
+    });
+
+    // Reports routes
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('/', [ReportController::class, 'index'])->name('index');
+        Route::get('/export-pdf', [ReportController::class, 'generatePDF'])->name('export-pdf');
+        Route::get('/export-excel', [ReportController::class, 'exportExcel'])->name('export-excel');
     });
 });
 

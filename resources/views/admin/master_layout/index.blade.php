@@ -11,7 +11,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('asset/css/admin/admin.css') }}">
-    <link rel="shortcut icon" href="{{ asset('images/logo.png') }}" type="image/x-icon">
+    <link rel="shortcut icon" href="{{ asset('asset/images/logo.png') }}" type="image/x-icon">
     @stack('styles')
 </head>
 <body>
@@ -22,7 +22,7 @@
                 <button class="navbar-toggler d-md-none me-2" type="button" onclick="toggleSidebar()">
                     <i class="fas fa-bars"></i>
                 </button>
-                <a class="navbar-brand" href="{{ route('test.admin.dashboard') }}">
+                <a class="navbar-brand" href="{{ route('admin.dashboard') }}">
                     <img src="{{ asset('asset/images/logo.png') }}" alt="Logo">
                     <span>Tanzania Teacher Portal</span>
                 </a>
@@ -87,9 +87,6 @@
                         <a class="dropdown-item" href="#">
                             <i class="fas fa-user"></i> My Profile
                         </a>
-                        <a class="dropdown-item" href="#">
-                            <i class="fas fa-cog"></i> Settings
-                        </a>
                         <div class="dropdown-divider"></div>
                         <form action="{{ route('logout') }}" method="POST" class="d-inline">
                             @csrf
@@ -103,90 +100,102 @@
         </div>
     </nav>
 
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <div class="sidebar-content">
-            <ul class="nav-list">
-                <li class="nav-item">
-                    <a href="{{ route('test.admin.dashboard') }}" class="nav-link {{ request()->routeIs('test.admin.dashboard') ? 'active' : '' }}">
-                        <i class="fas fa-home"></i>
-                        <span>Dashboard</span>
-                    </a>
-                </li>
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-content">
+                <ul class="nav-list">
+                    <li class="nav-item">
+                        <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+                            <i class="fas fa-home"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
 
-                <li class="nav-item">
-                    <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
-                        <i class="fas fa-users"></i> User Management
-                    </a>
-                </li>
+                    <li class="nav-item">
+                        <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                            <i class="fas fa-users"></i> User Management
+                        </a>
+                    </li>
 
-                <li class="nav-item">
-                    <a href="#trainingsSubmenu" data-bs-toggle="collapse" class="nav-link {{ request()->routeIs('admin.trainings.*') ? 'active' : '' }}">
-                        <i class="fas fa-chalkboard-teacher"></i>
-                        <span>Trainings</span>
-                        <i class="fas fa-chevron-down ms-auto"></i>
-                    </a>
-                    <div class="collapse {{ request()->routeIs('admin.trainings.*') ? 'show' : '' }}" id="trainingsSubmenu">
-                        <ul class="nav-list">
-                            <li class="nav-item">
-                                <a href="{{ route('admin.trainings.index') }}" class="nav-link {{ request()->routeIs('admin.trainings.index') ? 'active' : '' }}">
-                                    <i class="fas fa-list"></i>
-                                    <span>All Trainings</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                </li>
+                    <li class="nav-item">
+                        <a href="#trainingsSubmenu" data-bs-toggle="collapse" class="nav-link {{ request()->routeIs('admin.trainings.*') ? 'active' : '' }}">
+                            <i class="fas fa-chalkboard-teacher"></i>
+                            <span>Trainings</span>
+                            <i class="fas fa-chevron-down ms-auto"></i>
+                        </a>
+                        <div class="collapse {{ request()->routeIs('admin.trainings.*') ? 'show' : '' }}" id="trainingsSubmenu">
+                            <ul class="nav-list">
+                                <li class="nav-item">
+                                    <a href="{{ route('admin.trainings.index') }}" class="nav-link {{ request()->routeIs('admin.trainings.index') ? 'active' : '' }}">
+                                        <i class="fas fa-list"></i>
+                                        <span>All Trainings</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
 
-                <li class="nav-item">
-                    <a href="#teachersSubmenu" class="nav-link {{ request()->routeIs('admin.teachers.*') ? 'active' : '' }}" data-bs-toggle="collapse">
-                        <i class="fas fa-chalkboard-teacher"></i>
-                        <span>Teachers</span>
-                        <i class="fas fa-chevron-down ms-auto"></i>
-                    </a>
-                    <div class="collapse {{ request()->routeIs('admin.teachers.*') ? 'show' : '' }}" id="teachersSubmenu">
-                        <ul class="nav-list">
-                            <li class="nav-item">
-                                <a href="{{ route('admin.teachers.index') }}" class="nav-link {{ request()->routeIs('admin.teachers.index') ? 'active' : '' }}">
-                                    <i class="fas fa-list"></i>
-                                    <span>All Teachers</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                </li>
+                    <li class="nav-item">
+                        <a href="#teachersSubmenu" class="nav-link {{ request()->routeIs('admin.teachers.*') ? 'active' : '' }}" data-bs-toggle="collapse">
+                            <i class="fas fa-chalkboard-teacher"></i>
+                            <span>Teachers</span>
+                            <i class="fas fa-chevron-down ms-auto"></i>
+                        </a>
+                        <div class="collapse {{ request()->routeIs('admin.teachers.*') ? 'show' : '' }}" id="teachersSubmenu">
+                            <ul class="nav-list">
+                                <li class="nav-item">
+                                    <a href="{{ route('admin.teachers.index') }}" class="nav-link {{ request()->routeIs('admin.teachers.index') ? 'active' : '' }}">
+                                        <i class="fas fa-list"></i>
+                                        <span>All Teachers</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
 
-                <li class="nav-item">
-                    <a href="#institutionsSubmenu" class="nav-link {{ request()->routeIs('admin.institutions.*') ? 'active' : '' }}" data-bs-toggle="collapse">
-                        <i class="fas fa-university"></i>
-                        <span>Institutions</span>
-                        <i class="fas fa-chevron-down ms-auto"></i>
-                    </a>
-                    <div class="collapse {{ request()->routeIs('admin.institutions.*') ? 'show' : '' }}" id="institutionsSubmenu">
-                        <ul class="nav-list">
-                            <li class="nav-item">
-                                <a href="{{ route('admin.institutions.index') }}" class="nav-link {{ request()->routeIs('admin.institutions.index') ? 'active' : '' }}">
-                                    <i class="fas fa-list"></i>
-                                    <span>All Institutions</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                </li>
+                    <li class="nav-item">
+                        <a href="#institutionsSubmenu" class="nav-link {{ request()->routeIs('admin.institutions.*') ? 'active' : '' }}" data-bs-toggle="collapse">
+                            <i class="fas fa-university"></i>
+                            <span>Institutions</span>
+                            <i class="fas fa-chevron-down ms-auto"></i>
+                        </a>
+                        <div class="collapse {{ request()->routeIs('admin.institutions.*') ? 'show' : '' }}" id="institutionsSubmenu">
+                            <ul class="nav-list">
+                                <li class="nav-item">
+                                    <a href="{{ route('admin.institutions.index') }}" class="nav-link {{ request()->routeIs('admin.institutions.index') ? 'active' : '' }}">
+                                        <i class="fas fa-list"></i>
+                                        <span>All Institutions</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
 
-                <li class="nav-item mt-auto">
-                    <div class="nav-divider"></div>
-                    <a href="#" class="nav-link">
-                        <i class="fas fa-cog"></i>
-                        <span>Settings</span>
-                    </a>
-                </li>
-            </ul>
+                    <li class="nav-item">
+                        <a href="{{ route('admin.reports.index') }}" class="nav-link {{ request()->routeIs('admin.reports.index') ? 'active' : '' }}">
+                            <i class="fas fa-chart-bar"></i>
+                            <span>Reports & Analytics</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item mt-auto">
+                        <form action="{{ route('logout') }}" method="POST">
+                            @csrf
+                            <button type="submit" class="nav-link text-danger border-0 w-100 text-start">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span>Logout</span>
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
         </div>
-    </div>
 
-    <div class="content-wrapper">
-        @yield('content')
+        <div class="content-wrapper">
+            @yield('content')
+        </div>
     </div>
 
     <!-- JavaScript Dependencies -->
