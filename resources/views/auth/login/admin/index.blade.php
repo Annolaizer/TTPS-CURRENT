@@ -87,6 +87,13 @@
                             @csrf
                             <input type="hidden" name="role" value="admin">
 
+                            @if(session('error'))
+                                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                    <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            @endif
+
                             <div class="form-floating mb-4">
                                 <input type="email" id="email" name="email" class="form-control @error('email') is-invalid @enderror" 
                                     placeholder="Email address" required value="{{ old('email') }}">
@@ -156,7 +163,6 @@
                             if (response.redirect) {
                                 window.location.href = response.redirect;
                             } else {
-                                // Default to admin dashboard if no redirect provided
                                 window.location.href = '{{ route("admin.dashboard") }}';
                             }
                         } else {
@@ -164,25 +170,18 @@
                             Swal.fire({
                                 icon: 'error',
                                 title: 'Login Failed',
-                                text: response.message || 'An error occurred during login.'
+                                text: 'Incorrect email or password.',
+                                confirmButtonColor: '#198754'
                             });
                         }
                     },
                     error: function(xhr) {
                         submitBtn.prop('disabled', false);
-                        const response = xhr.responseJSON;
-                        let errorMessage = 'Login failed. Please check your credentials.';
-                        
-                        if (response && response.errors) {
-                            errorMessage = Object.values(response.errors)[0][0];
-                        } else if (response && response.message) {
-                            errorMessage = response.message;
-                        }
-
                         Swal.fire({
                             icon: 'error',
                             title: 'Login Failed',
-                            text: errorMessage
+                            text: 'An error occurred while logging in.',
+                            confirmButtonColor: '#198754'
                         });
                     }
                 });
