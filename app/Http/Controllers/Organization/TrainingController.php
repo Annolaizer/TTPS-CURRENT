@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Training;
 use App\Models\Organization;
+use App\Models\Subject;
+use App\Models\Region;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
@@ -21,6 +23,10 @@ class TrainingController extends Controller
         // Get organization directly using user_id
         $organization = Organization::where('user_id', $user->user_id)->first();
 
+        // Get subjects and regions for the form
+        $subjects = Subject::orderBy('subject_name')->get();
+        $regions = Region::orderBy('region_name')->get();
+
         Log::info('User and Organization details', [
             'user_id' => $user->user_id,
             'organization' => $organization ? $organization->toArray() : null
@@ -35,7 +41,9 @@ class TrainingController extends Controller
                 'date_from' => $request->date_from,
                 'date_to' => $request->date_to,
                 'perPage' => 10,
-                'perPageOptions' => $this->perPageOptions
+                'perPageOptions' => $this->perPageOptions,
+                'subjects' => $subjects,
+                'regions' => $regions
             ]);
         }
 
@@ -49,7 +57,7 @@ class TrainingController extends Controller
         ]);
 
         // Search filter
-        if ($request->has('search')) {
+        if ($request->filled('search')) {
             $search = $request->get('search');
             $query->where(function($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
@@ -59,15 +67,15 @@ class TrainingController extends Controller
         }
 
         // Status filter
-        if ($request->has('status') && $request->status != 'all') {
+        if ($request->filled('status') && $request->status !== 'all') {
             $query->where('status', $request->status);
         }
 
         // Date filter
-        if ($request->has('date_from')) {
+        if ($request->filled('date_from')) {
             $query->whereDate('start_date', '>=', $request->date_from);
         }
-        if ($request->has('date_to')) {
+        if ($request->filled('date_to')) {
             $query->whereDate('start_date', '<=', $request->date_to);
         }
 
@@ -91,7 +99,10 @@ class TrainingController extends Controller
             'date_from' => $request->date_from,
             'date_to' => $request->date_to,
             'perPage' => $perPage,
-            'perPageOptions' => $this->perPageOptions
+            'perPageOptions' => $this->perPageOptions,
+            'subjects' => $subjects,
+            'regions' => $regions,
+            'organization' => $organization
         ]);
     }
 
@@ -108,4 +119,86 @@ class TrainingController extends Controller
 
         return view('organization.trainings.show', compact('training'));
     }
+
+    public function store(Request $request)
+    {
+        Log:info($request->all());
+        try {
+            // Validate the incoming request
+            $validated = $request->validate([
+                'title' => 'required|string|max:255',
+                'organization_id' => 'required|exists:organizations,organization_id', // Ensure organization exists
+                'education_level' => 'required|string',
+                'training_phase' => 'required|integer', // Required integer
+                'max_participants' => 'required|integer|min:1', // Required integer >= 1
+                'description' => 'required|string',
+                'start_date' => 'required|date',
+                'end_date' => 'required|date|after_or_equal:start_date', // End date must be after or equal to start date
+                'start_time' => 'required|date_format:H:i', // Validate time format
+                'duration_days' => 'required|integer|min:1', // Required integer >= 1
+                'region_id' => 'required|exists:regions,region_id', // Ensure region exists
+                'district_id' => 'required|exists:districts,district_id', // Ensure district exists
+                'ward_id' => 'required|exists:wards,ward_id', // Ensure ward exists
+                'venue_name' => 'required|string|max:255',
+                'subjects' => 'required|array', // Must be an array
+                'subjects.*' => 'exists:subjects,subject_id' // Each subject ID must exist
+            ]);
+
+            // Generate a unique training code
+            $maxId = Training::max('training_id') ?? 0;
+            $nextId = $maxId + 1;
+            $trainingCode = 'TRN-' . date('Y') . '-' . str_pad($nextId, 4, '0', STR_PAD_LEFT);
+
+            // Create the training record
+            $training = Training::create([
+                'training_code' => $trainingCode,
+                'title' => $validated['title'],
+                'organization_id' => $validated['organization_id'],
+                'education_level' => $validated['education_level'],
+                'training_phase' => $validated['training_phase'],
+                'max_participants' => $validated['max_participants'],
+                'description' => $validated['description'],
+                'start_date' => $validated['start_date'],
+                'end_date' => $validated['end_date'],
+                'start_time' => $validated['start_time'],
+                'duration_days' => $validated['duration_days'],
+                'region_id' => $validated['region_id'],
+                'district_id' => $validated['district_id'],
+                'ward_id' => $validated['ward_id'],
+                'venue_name' => $validated['venue_name'],
+                'status' => 'pending', // Default status
+            ]);
+
+            // Attach subjects to the training
+            $training->subjects()->attach($validated['subjects']);
+
+            // Load relationships for the response
+            $training->load(['organization', 'subjects']);
+
+            // Return a successful JSON response
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Training created successfully',
+                'training' => $training
+            ], 201);
+
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Handle validation exceptions
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            // Handle other exceptions
+            \Log::error('Training creation failed: ' . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to create training. Please try again later.'
+            ], 500);
+        }
+    }
+
+
 }

@@ -37,11 +37,8 @@ Route::get('/about', function () {
     return view('about.index');
 })->name('about');
 
-// Test route for admin dashboard without auth
-Route::get('/test/admin/dashboard', [AdminDashboardController::class, 'index'])->name('test.admin.dashboard');
-Route::get('/test/admin/dashboard/data', [AdminDashboardController::class, 'apiData'])->name('test.admin.dashboard.data');
-
 // Location API Routes
+Route::get('/api/regions', [LocationController::class, 'getRegions'])->name('api.regions');
 Route::get('/api/districts/{region}', [LocationController::class, 'getDistricts'])->name('api.districts');
 Route::get('/api/wards/{district}', [LocationController::class, 'getWards'])->name('api.wards');
 
@@ -164,6 +161,7 @@ Route::middleware('auth')->group(function () {
         
         // Training routes
         Route::get('/trainings', [OrganizationTrainingController::class, 'index'])->name('trainings');
+        Route::post('/trainings', [OrganizationTrainingController::class, 'store'])->name('trainings.store');
         Route::get('/trainings/{training}', [OrganizationTrainingController::class, 'show'])->name('trainings.show');
     });
 });
