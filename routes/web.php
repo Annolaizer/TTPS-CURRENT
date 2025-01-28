@@ -20,6 +20,7 @@ use App\Http\Controllers\QualifiedTeacherController;
 use App\Http\Controllers\QualifiedFacilitatorsController;
 use App\Http\Controllers\TeacherProfileController;
 use App\Http\Controllers\CpdFacilitator\CPDFacilitatorTrainingController;
+use App\Http\Controllers\OrganizationTrainingAssignmentController;
 
 Route::get('/', function () {
     return view('home.index');
@@ -163,6 +164,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/trainings', [OrganizationTrainingController::class, 'index'])->name('trainings');
         Route::post('/trainings', [OrganizationTrainingController::class, 'store'])->name('trainings.store');
         Route::get('/trainings/{training}', [OrganizationTrainingController::class, 'show'])->name('trainings.show');
+        Route::get('/{trainingCode}/assignment', [OrganizationTrainingAssignmentController::class, 'index'])->name('assignment.show');
     });
 });
 

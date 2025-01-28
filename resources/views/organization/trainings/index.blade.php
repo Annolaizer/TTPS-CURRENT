@@ -119,7 +119,9 @@
             border-radius: 5px;
             transition: background-color 0.3s;
         }
-
+        a{
+            text-decoration: none;
+        }
         .btn-filter:hover {
             background-color: var(--hover-color);
             color: white;
@@ -228,8 +230,8 @@
                     <table class="table">
                         <thead>
                             <tr>
-                                <th>Title</th>
                                 <th>Code</th>
+                                <th>Title</th>
                                 <th>Education Level</th>
                                 <th>Phase</th>
                                 <th>Start Date</th>
@@ -240,8 +242,17 @@
                         <tbody>
                             @foreach($trainings as $training)
                                 <tr>
+                                    <td>
+                                        <a href="{{ route('organization.assignment.show', ['trainingCode' => $training->training_code]) }}" title="assign participants" >
+                                           <span>
+                                                <i class="fas fa-users text-success"></i>
+                                           </span> 
+                                           <span>
+
+                                           </span> {{ $training->training_code }}
+                                        </a>
+                                    </td>
                                     <td>{{ $training->title }}</td>
-                                    <td>{{ $training->training_code }}</td>
                                     <td>{{ $training->education_level }}</td>
                                     <td>Phase {{ $training->training_phase }}</td>
                                     <td>{{ date('d M Y', strtotime($training->start_date)) }}</td>
