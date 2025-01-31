@@ -306,6 +306,7 @@ use App\Helpers\StatusHelper;
                     </div>
                     <div class="modal-body">
                         <form id="participants-form" class="needs-validation" novalidate>
+                            <input type="hidden" id="training-code-input" name="training_code" value="{{ $training->training_code }}">
                             <!-- Training Type -->
                             <div class="row mb-4">
                                 <div class="col-md-6">

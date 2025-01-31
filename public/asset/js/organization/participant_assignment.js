@@ -7,7 +7,7 @@ $(document).ready(function() {
         }
     });
 
-    const trainingCode = $('input[name="training_code"]').val();
+    const trainingCode = $('#training-code-input').val();
     let selectedTeachers = new Set();
     let searchTimeout;
 
@@ -110,15 +110,36 @@ $(document).ready(function() {
     // Load teachers when region changes
     $('#region_filter').on('change', function() {
         const regionId = $(this).val();
-        $('#teachers-content').html('<div class="text-center py-3"><div class="spinner-border text-primary" role="status"></div></div>');
+        const trainingCode = $('#training-code-input').val();
+        
+        if (!trainingCode) {
+            console.error('Training code not found');
+            $('#teachers-content').html(`
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    Error: Training code not found
+                </div>
+            `);
+            return;
+        }
+
+        $('#teachers-content').html(`
+            <div class="text-center py-3">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <div class="mt-2">Loading teachers...</div>
+            </div>
+        `);
         
         $.ajax({
             url: `/trainings/${trainingCode}/available-teachers`,
             method: 'GET',
             data: { region_id: regionId },
             success: function(response) {
-                if (response.status === 'success') {
-                    renderTeachers(response);
+                console.log('API Response:', response); // Debug log
+                if (response.status === 'success' && response.data && response.data.teachers) {
+                    renderTeachers(response.data);
                 } else {
                     $('#teachers-content').html(`
                         <div class="alert alert-warning">
@@ -140,9 +161,53 @@ $(document).ready(function() {
         });
     });
 
+    // Load teachers initially when modal opens
+    $('#participants-modal').on('show.bs.modal', function() {
+        $('#region_filter').trigger('change');
+        loadQualifiedFacilitators();
+    });
+
+    // Handle select all functionality
+    $(document).on('change', '#select-all-teachers', function() {
+        const isChecked = $(this).prop('checked');
+        $('.teacher-checkbox').prop('checked', isChecked);
+        updateTeacherCount();
+    });
+
+    $(document).on('change', '.teacher-checkbox', function() {
+        updateTeacherCount();
+        updateSelectAllState();
+    });
+
+    // Update teacher count
+    function updateTeacherCount() {
+        const count = $('.teacher-checkbox:checked').length;
+        $('#selected-teachers-count').text(count);
+    }
+
+    // Update select all checkbox state
+    function updateSelectAllState() {
+        const totalTeachers = $('.teacher-checkbox').length;
+        const selectedCount = $('.teacher-checkbox:checked').length;
+
+        const selectAllCheckbox = $('#select-all-teachers');
+        if (selectedCount === 0) {
+            selectAllCheckbox.prop('checked', false);
+            selectAllCheckbox.prop('indeterminate', false);
+        } else if (selectedCount === totalTeachers) {
+            selectAllCheckbox.prop('checked', true);
+            selectAllCheckbox.prop('indeterminate', false);
+        } else {
+            selectAllCheckbox.prop('checked', false);
+            selectAllCheckbox.prop('indeterminate', true);
+        }
+    }
+
     // Render teachers list
     function renderTeachers(data) {
-        if (!data.teachers || data.teachers.length === 0) {
+        console.log('Rendering teachers with data:', data); // Debug log
+        
+        if (!data || !data.teachers || data.teachers.length === 0) {
             $('#teachers-content').html(`
                 <div class="text-center text-muted py-4">
                     <i class="fas fa-user-slash fa-2x mb-2"></i>
@@ -205,50 +270,10 @@ $(document).ready(function() {
             ${content}
         `);
         
+        // Update counts and states
+        $('#total-teachers').text(data.total_teachers || data.teachers.length);
         updateTeacherCount();
         updateSelectAllState();
-    }
-
-    // Load teachers initially when modal opens
-    $('#participants-modal').on('show.bs.modal', function() {
-        $('#region_filter').trigger('change');
-        loadQualifiedFacilitators();
-    });
-
-    // Handle select all functionality
-    $(document).on('change', '#select-all-teachers', function() {
-        const isChecked = $(this).prop('checked');
-        $('.teacher-checkbox').prop('checked', isChecked);
-        updateTeacherCount();
-    });
-
-    $(document).on('change', '.teacher-checkbox', function() {
-        updateTeacherCount();
-        updateSelectAllState();
-    });
-
-    // Update teacher count
-    function updateTeacherCount() {
-        const count = $('.teacher-checkbox:checked').length;
-        $('#selected-teachers-count').text(count);
-    }
-
-    // Update select all checkbox state
-    function updateSelectAllState() {
-        const totalTeachers = $('.teacher-checkbox').length;
-        const selectedCount = $('.teacher-checkbox:checked').length;
-
-        const selectAllCheckbox = $('#select-all-teachers');
-        if (selectedCount === 0) {
-            selectAllCheckbox.prop('checked', false);
-            selectAllCheckbox.prop('indeterminate', false);
-        } else if (selectedCount === totalTeachers) {
-            selectAllCheckbox.prop('checked', true);
-            selectAllCheckbox.prop('indeterminate', false);
-        } else {
-            selectAllCheckbox.prop('checked', false);
-            selectAllCheckbox.prop('indeterminate', true);
-        }
     }
 
     // Load qualified facilitators
