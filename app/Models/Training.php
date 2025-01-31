@@ -128,19 +128,26 @@ class Training extends Model
     }
 
     /**
+     * Get all enrollments for the training.
+     */
+    public function enrollments()
+    {
+        return $this->hasMany(TrainingEnrollment::class, 'training_id', 'training_id');
+    }
+
+    /**
      * Get the participants for the training.
      */
     public function participants()
     {
-        return $this->belongsToMany(User::class, 'training_participants', 'training_id', 'user_id');
-    }
-
-    /**
-     * Get the enrollments for the training.
-     */
-    public function enrollments(): HasMany
-    {
-        return $this->hasMany(TrainingEnrollment::class, 'training_id', 'training_id');
+        return $this->hasManyThrough(
+            TeacherProfile::class,
+            TrainingEnrollment::class,
+            'training_id', // Foreign key on training_enrollments table...integer
+            'teacher_id', // Foreign key on teacher_profiles table...uuid
+            'training_id', // Local key on trainings table...integer
+            'teacher_id'  // Local key on training_enrollments table...uuid
+        );
     }
 
     /**

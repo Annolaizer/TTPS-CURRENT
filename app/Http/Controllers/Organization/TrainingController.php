@@ -3,14 +3,15 @@
 namespace App\Http\Controllers\Organization;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Training;
 use App\Models\Organization;
 use App\Models\Subject;
 use App\Models\Region;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class TrainingController extends Controller
 {
@@ -122,7 +123,7 @@ class TrainingController extends Controller
 
     public function store(Request $request)
     {
-        Log:info($request->all());
+        Log::info($request->all());
         try {
             // Validate the incoming request
             $validated = $request->validate([
@@ -200,5 +201,80 @@ class TrainingController extends Controller
         }
     }
 
+    /**
+     * Generate a comprehensive report for a specific training.
+     *
+     * @param Training $training
+     * @return \Illuminate\Http\Response
+     */
+    public function generateReport(Training $training)
+    {
+        // Eager load all necessary relationships
+        $training->load([
+            'organization',
+            'teachers.user',
+            'facilitators',
+            'enrollments.teacher.user'
+        ]);
 
+        // Get assigned teachers (from training_teachers pivot table) with their users
+        $assignedTeachers = $training->teachers;
+        
+        // Get enrolled teachers (from training_enrollments table) with their users
+        $enrolledTeachers = $training->enrollments->map(function($enrollment) {
+            return $enrollment->teacher;
+        })->filter();
+        
+        // Get facilitators
+        $facilitators = $training->facilitators;
+
+        // Calculate teacher statistics
+        $teacherStats = [
+            'total_assigned' => $assignedTeachers->count(),
+            'total_enrolled' => $enrolledTeachers->count(),
+            'male_assigned' => $assignedTeachers->filter(function($teacher) {
+                return optional($teacher->user)->gender === 'male';
+            })->count(),
+            'female_assigned' => $assignedTeachers->filter(function($teacher) {
+                return optional($teacher->user)->gender === 'female';
+            })->count(),
+            'male_enrolled' => $enrolledTeachers->filter(function($teacher) {
+                return optional($teacher->user)->gender === 'male';
+            })->count(),
+            'female_enrolled' => $enrolledTeachers->filter(function($teacher) {
+                return optional($teacher->user)->gender === 'female';
+            })->count(),
+            'attended' => $training->enrollments->where('attendance_status', 'attended')->count(),
+        ];
+        
+        // Calculate facilitator statistics
+        $facilitatorStats = [
+            'total' => $facilitators->count(),
+            'male' => $facilitators->where('gender', 'male')->count(),
+            'female' => $facilitators->where('gender', 'female')->count(),
+            'attended' => $facilitators->whereIn('pivot.attendance_status', ['attended', 'present'])->count()
+        ];
+
+        // Calculate actual attendance rate
+        $totalAssigned = $teacherStats['total_assigned'] + $facilitatorStats['total'];
+        $totalAttended = $teacherStats['attended'] + $facilitatorStats['attended'];
+        $attendanceRate = $totalAssigned > 0 ? ($totalAttended / $totalAssigned) * 100 : 0;
+
+        // Generate PDF
+        $pdf = Pdf::loadView('reports.training', [
+            'training' => $training,
+            'assignedTeachers' => $assignedTeachers,
+            'enrolledTeachers' => $enrolledTeachers,
+            'facilitators' => $facilitators,
+            'teacherStats' => $teacherStats,
+            'facilitatorStats' => $facilitatorStats,
+            'attendanceRate' => $attendanceRate,
+            'generatedAt' => now()
+        ]);
+
+        // Set paper size to A4
+        $pdf->setPaper('A4');
+
+        return $pdf->stream("training-report-{$training->training_code}.pdf");
+    }
 }

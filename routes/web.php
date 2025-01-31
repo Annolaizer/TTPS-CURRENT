@@ -155,15 +155,17 @@ Route::middleware('auth')->group(function () {
 
     // Organization routes
     Route::middleware(['auth', \App\Http\Middleware\OrganizationMiddleware::class])->prefix('organization')->name('organization.')->group(function () {
+        // Dashboard routes
         Route::get('/dashboard', [OrganizationDashboardController::class, 'index'])->name('dashboard');
         Route::get('/profile', [OrganizationDashboardController::class, 'profile'])->name('profile');
         Route::get('/profile/setup', [OrganizationDashboardController::class, 'profileSetup'])->name('profile.setup');
         Route::put('/profile/update', [OrganizationDashboardController::class, 'profileUpdate'])->name('profile.update');
         
         // Training routes
-        Route::get('/trainings', [OrganizationTrainingController::class, 'index'])->name('trainings');
-        Route::post('/trainings', [OrganizationTrainingController::class, 'store'])->name('trainings.store');
-        Route::get('/trainings/{training}', [OrganizationTrainingController::class, 'show'])->name('trainings.show');
+        Route::get('/trainings', [\App\Http\Controllers\Organization\TrainingController::class, 'index'])->name('trainings');
+        Route::post('/trainings', [\App\Http\Controllers\Organization\TrainingController::class, 'store'])->name('trainings.store');
+        Route::get('/trainings/{training}', [\App\Http\Controllers\Organization\TrainingController::class, 'show'])->name('trainings.show');
+        Route::get('/trainings/{training}/report', [\App\Http\Controllers\Organization\TrainingController::class, 'generateReport'])->name('trainings.report');
         Route::get('/{trainingCode}/assignment', [OrganizationTrainingAssignmentController::class, 'index'])->name('assignment.show');
     });
 });
@@ -236,6 +238,7 @@ Route::prefix('admin')
         
         Route::delete('/{trainingCode}/remove-teacher/{teacherId}', [TrainingAssignmentController::class, 'removeTeacher'])->name('teachers.remove');
         Route::delete('/{trainingCode}/remove-facilitator/{facilitatorId}', [TrainingAssignmentController::class, 'removeFacilitator'])->name('facilitators.remove');
+        Route::get('/{training}/report', [TrainingController::class, 'generateReport'])->name('report');
     });
 
     // Reports routes

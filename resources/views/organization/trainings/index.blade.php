@@ -262,15 +262,22 @@
                                         </span>
                                     </td>
                                     <td>
-                                        <a href="{{ route('organization.trainings.show', $training->training_id) }}" class="btn btn-sm btn-info text-white">
+                                        <a href="{{ route('organization.trainings.show', $training->training_id) }}" class="btn btn-sm btn-info text-white" title="View Details">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <a href="{{ route('organization.trainings.show', $training->training_id) }}" class="btn btn-sm btn-warning text-white">
+                                        <a href="{{ route('organization.trainings.show', $training->training_id) }}" class="btn btn-sm btn-warning text-white" title="Edit Training">
                                             <i class="fas fa-pen-alt"></i>
                                         </a>
-                                        <a href="{{ route('organization.trainings.show', $training->training_id) }}" class="btn btn-sm btn-danger text-white">
+                                        <a href="{{ route('organization.trainings.show', $training->training_id) }}" class="btn btn-sm btn-danger text-white" title="Delete Training">
                                             <i class="fas fa-trash-alt"></i>
                                         </a>
+                                        <button class="btn btn-sm btn-success text-white generate-report" 
+                                                data-training-id="{{ $training->training_id }}"
+                                                data-training-code="{{ $training->training_code }}"
+                                                data-training-title="{{ $training->title }}"
+                                                title="Generate Report">
+                                            <i class="fas fa-file-alt"></i>
+                                        </button>
                                     </td>
                                 </tr>
                             @endforeach
@@ -453,7 +460,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
     <script>
         $(document).ready(function() {
@@ -700,7 +707,77 @@
                 });
             });
 
-
+            // Handle report generation
+            $('.generate-report').click(function() {
+                const trainingId = $(this).data('training-id');
+                const trainingCode = $(this).data('training-code');
+                const trainingTitle = $(this).data('training-title');
+                
+                Swal.fire({
+                    title: 'Generate Training Report',
+                    html: `
+                        <p>Generate a comprehensive report for training:</p>
+                        <p><strong>${trainingTitle}</strong></p>
+                        <p class="text-muted">${trainingCode}</p>
+                        <div class="mt-3">
+                            <p>The report will include:</p>
+                            <ul class="text-start">
+                                <li>Training Overview & Details</li>
+                                <li>Participant Statistics</li>
+                                <li>Attendance Records</li>
+                                <li>Performance Metrics</li>
+                                <li>Resource Utilization</li>
+                                <li>Feedback Summary</li>
+                            </ul>
+                        </div>
+                    `,
+                    icon: 'info',
+                    showCancelButton: true,
+                    confirmButtonText: 'Generate Report',
+                    cancelButtonText: 'Cancel',
+                    confirmButtonColor: '#28a745',
+                    showLoaderOnConfirm: true,
+                    preConfirm: () => {
+                        return fetch(`/organization/trainings/${trainingId}/report`, {
+                            method: 'GET',
+                            headers: {
+                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                                'Accept': 'application/pdf'
+                            }
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(response.statusText);
+                            }
+                            return response.blob();
+                        })
+                        .catch(error => {
+                            Swal.showValidationMessage(
+                                `Request failed: ${error}`
+                            );
+                        });
+                    },
+                    allowOutsideClick: () => !Swal.isLoading()
+                }).then((result) => {
+                    if (result.isConfirmed && result.value) {
+                        // Create a download link for the blob
+                        const url = window.URL.createObjectURL(result.value);
+                        const a = document.createElement('a');
+                        a.style.display = 'none';
+                        a.href = url;
+                        a.download = `Training_Report_${trainingCode}.pdf`;
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                        
+                        Swal.fire(
+                            'Success!',
+                            'Training report has been generated successfully.',
+                            'success'
+                        );
+                    }
+                });
+            });
         });
     </script>
 </body>
