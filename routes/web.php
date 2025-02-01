@@ -132,8 +132,15 @@ Route::middleware('auth')->group(function () {
             Route::get('/dashboard', [TeacherDashboardController::class, 'index'])->name('dashboard');
             Route::get('/profile', [TeacherDashboardController::class, 'profile'])->name('profile');
             Route::get('/profile/setup', [TeacherDashboardController::class, 'profileSetup'])->name('profile.setup');
-            Route::get('/training', [TeacherTrainingController::class, 'index'])->name('training');
+            
+            // Ensure correct route is defined
+            Route::get('/training', [TeacherTrainingController::class, 'index'])->name('training.index');
+            
             Route::get('/training/{id}', [TeacherTrainingController::class, 'show'])->name('training.show');
+            Route::post('/training/{id}/confirm-attendance', [TeacherTrainingController::class, 'confirmAttendance'])->name('training.confirm-attendance');
+            Route::post('/training/{id}/upload-report', [TeacherTrainingController::class, 'uploadReport'])->name('training.upload-report');
+            Route::post('/training/{id}/accept', [TeacherTrainingController::class, 'accept'])->name('training.accept');
+            Route::post('/training/{id}/reject', [TeacherTrainingController::class, 'reject'])->name('training.reject');
             Route::get('/settings', [TeacherSettingsController::class, 'index'])->name('settings');
             Route::get('/basic-info', function() {
                 return view('teacher.basic_info.index');

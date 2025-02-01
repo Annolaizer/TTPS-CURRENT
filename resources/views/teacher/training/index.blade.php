@@ -17,6 +17,8 @@
             --hover-dark: #006c68;
             --light-bg: #f8f8f8;
             --navbar-height: 70px;
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
         }
         * {
             margin: 0;
@@ -248,7 +250,7 @@
                         <a href="{{ route('teacher.dashboard') }}">
                             <i class="fas fa-home"></i>Home
                         </a>
-                        <a href="{{ route('teacher.training') }}">
+                        <a href="{{ route('teacher.training.index') }}">
                             <i class="fas fa-certificate"></i>Training
                         </a>
                         <a href="{{ route('teacher.settings') }}">
@@ -348,8 +350,8 @@
                                     <tr>
                                         <th>Training Title</th>
                                         <th>Organization</th>
-                                        <th>Duration</th>
-                                        <th>Dates</th>
+                                        <th>Start Date</th>
+                                        <th>End Date</th>
                                         <th>Status</th>
                                         <th>Actions</th>
                                     </tr>
@@ -359,31 +361,29 @@
                                     <tr>
                                         <td>{{ $training->title }}</td>
                                         <td>{{ $training->organization_name }}</td>
-                                        <td>{{ $training->duration_days }} days</td>
+                                        <td>{{ $training->start_date }}</td>
+                                        <td>{{ $training->end_date }}</td>
                                         <td>
-                                            @if($training->start_date && $training->end_date)
-                                                {{ \Carbon\Carbon::parse($training->start_date)->format('M d') }} - 
-                                                {{ \Carbon\Carbon::parse($training->end_date)->format('M d, Y') }}
-                                            @else
-                                                TBD
-                                            @endif
+                                            @php
+                                                // Get the current teacher's participation status
+                                                $participationStatus = $training->getTeacherParticipationStatus();
+                                                
+                                                $statusClass = match($participationStatus) {
+                                                    'Invitation Pending' => 'bg-warning text-dark',
+                                                    'Accepted' => 'bg-info text-white',
+                                                    'Attended' => 'bg-success text-white',
+                                                    'Rejected' => 'bg-danger text-white',
+                                                    'Not Invited' => 'bg-secondary text-white',
+                                                    default => 'bg-light text-dark'
+                                                };
+                                            @endphp
+                                            <span class="badge {{ $statusClass }}">
+                                                {{ $participationStatus }}
+                                            </span>
                                         </td>
                                         <td>
-                                            @if($training->status === 'completed')
-                                                <span class="badge bg-success">Completed</span>
-                                            @elseif($training->status === 'verified' && $training->start_date <= now() && $training->end_date >= now())
-                                                <span class="badge bg-info">Ongoing</span>
-                                            @elseif($training->status === 'verified' && $training->start_date > now())
-                                                <span class="badge bg-warning">Upcoming</span>
-                                            @elseif($training->status === 'rejected')
-                                                <span class="badge bg-danger">Rejected</span>
-                                            @else
-                                                <span class="badge bg-secondary">{{ ucfirst($training->status) }}</span>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            <button type="button" class="btn btn-info btn-sm" 
-                                                    onclick="viewDetails('{{ $training->training_id }}')"
+                                            <button type="button" class="btn btn-primary btn-sm" 
+                                                    onclick="viewTrainingDetails('{{ $training->training_id }}')"
                                                     title="View Details">
                                                 <i class="fas fa-eye"></i>
                                             </button>
@@ -399,13 +399,174 @@
         </div>
     </div>
 
+    <!-- Comprehensive Training Modal -->
+    @foreach($trainings as $training)
+    <div class="modal fade" id="trainingModal{{ $training->training_id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: var(--primary-color); color: white;">
+                    <h5 class="modal-title">Training Details</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Training Information -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6 style="color: var(--primary-color);">Basic Information</h6>
+                            <p><strong>Title:</strong> {{ $training->title ?? 'Not specified' }}</p>
+                            <p><strong>Organization:</strong> {{ $training->organization_name ?? 'Not specified' }}</p>
+                            <p><strong>Status:</strong> 
+                                <span class="badge" style="background-color: {{ 
+                                    $training->status == 'completed' ? 'var(--success-color)' : 
+                                    ($training->status == 'verified' ? 'var(--primary-color)' : 
+                                    ($training->status == 'rejected' ? 'var(--danger-color)' : 
+                                    ($training->status == 'pending' ? '#ffc107' : '#6c757d'))) 
+                                }}; color: {{ 
+                                    $training->status == 'pending' ? '#000' : '#fff' 
+                                }}">
+                                    {{ ucfirst($training->status ?? 'pending') }}
+                                </span>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 style="color: var(--primary-color);">Schedule</h6>
+                            <p><strong>Start Date:</strong> {{ $training->start_date ? \Carbon\Carbon::parse($training->start_date)->format('M d, Y') : 'Not specified' }}</p>
+                            <p><strong>End Date:</strong> {{ $training->end_date ? \Carbon\Carbon::parse($training->end_date)->format('M d, Y') : 'Not specified' }}</p>
+                            <p><strong>Duration:</strong> 
+                                @if($training->start_date && $training->end_date)
+                                    {{ \Carbon\Carbon::parse($training->start_date)->diffInDays(\Carbon\Carbon::parse($training->end_date)) + 1 }} days
+                                @else
+                                    Not specified
+                                @endif
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Training Description -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 style="color: var(--primary-color);">Description</h6>
+                            <p>{{ $training->description ?? 'No description available' }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Training Location -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 style="color: var(--primary-color);">Location Details</h6>
+                            <p><strong>Venue:</strong> {{ $training->location ?? 'Not specified' }}</p>
+                            @if($training->location_details)
+                                <p>{{ $training->location_details }}</p>
+                            @endif
+                        </div>
+                    </div>
+
+                    <!-- Training Actions -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 style="color: var(--primary-color);">Actions</h6>
+                            <div class="d-flex gap-2">
+                                @if($training->status == 'verified' && !$training->attendance_confirmed)
+                                    <button type="button" class="btn btn-success" 
+                                            onclick="confirmAttendance('{{ $training->training_id }}')">
+                                        <i class="fas fa-check"></i> Confirm Attendance
+                                    </button>
+                                @endif
+
+                                @if($training->status == 'completed' || ($training->end_date && \Carbon\Carbon::parse($training->end_date)->addDay()->isPast()))
+                                    <button type="button" class="btn btn-primary" 
+                                            onclick="toggleReportForm('{{ $training->training_id }}')">
+                                        <i class="fas fa-file-upload"></i> Upload Report
+                                    </button>
+                                @endif
+
+                                @if($training->status == 'pending')
+                                    <button type="button" class="btn btn-success" 
+                                            onclick="acceptTraining('{{ $training->training_id }}')">
+                                        <i class="fas fa-check"></i> Accept
+                                    </button>
+                                    <button type="button" class="btn btn-danger" 
+                                            onclick="showRejectionForm('{{ $training->training_id }}')">
+                                        <i class="fas fa-times"></i> Reject
+                                    </button>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Report Upload Form (Initially Hidden) -->
+                    <div class="row mb-4" id="reportForm{{ $training->training_id }}" style="display: none;">
+                        <div class="col-12">
+                            <h6 style="color: var(--primary-color);">Upload Training Report</h6>
+                            <form id="trainingReportForm{{ $training->training_id }}" enctype="multipart/form-data">
+                                @csrf
+                                <div class="mb-3">
+                                    <label for="report" class="form-label">Training Report (PDF only)</label>
+                                    <input type="file" class="form-control" name="report" accept=".pdf" required>
+                                    <small class="text-muted">Maximum file size: 10MB</small>
+                                </div>
+                                <button type="button" class="btn" style="background-color: var(--primary-color); color: white;" onclick="submitReport('{{ $training->training_id }}')">
+                                    Submit Report
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Rejection Form -->
+                    <div class="row mb-4" id="rejectionForm{{ $training->training_id }}" style="display: none;">
+                        <div class="col-12">
+                            <div class="card border-danger">
+                                <div class="card-body">
+                                    <h6 style="color: var(--danger-color);">Rejection Reason</h6>
+                                    <form id="trainingRejectionForm{{ $training->training_id }}">
+                                        @csrf
+                                        <div class="mb-3">
+                                            <textarea class="form-control" name="reason" rows="3" 
+                                                    placeholder="Please provide a reason for rejecting this training..." required></textarea>
+                                        </div>
+                                        <div class="d-flex gap-2">
+                                            <button type="button" class="btn btn-danger" onclick="rejectTraining('{{ $training->training_id }}')">
+                                                Confirm Rejection
+                                            </button>
+                                            <button type="button" class="btn btn-secondary" 
+                                                    onclick="hideRejectionForm('{{ $training->training_id }}')">
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Training History -->
+                    @if($training->status == 'completed')
+                    <div class="row">
+                        <div class="col-12">
+                            <h6 style="color: var(--primary-color);">Training History</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-clock text-muted"></i> Started: {{ $training->start_date ? \Carbon\Carbon::parse($training->start_date)->format('M d, Y') : 'Not specified' }}</li>
+                                @if($training->attendance_confirmed)
+                                    <li><i class="fas fa-check text-success"></i> Attendance Confirmed: {{ \Carbon\Carbon::parse($training->attendance_confirmed_at)->format('M d, Y') }}</li>
+                                @endif
+                                @if($training->report_submitted)
+                                    <li><i class="fas fa-file-alt" style="color: var(--primary-color);"></i> Report Submitted: {{ \Carbon\Carbon::parse($training->report_submitted_at)->format('M d, Y') }}</li>
+                                @endif
+                                <li><i class="fas fa-flag-checkered text-success"></i> Completed: {{ $training->end_date ? \Carbon\Carbon::parse($training->end_date)->format('M d, Y') : 'Not specified' }}</li>
+                            </ul>
+                        </div>
+                    </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+    @endforeach
+
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
-    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
-    <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
         // Add CSRF token to all AJAX requests
@@ -457,9 +618,227 @@
             });
         });
 
-        function viewDetails(id) {
+        function viewTrainingDetails(id) {
             if (!id) return;
-            window.location.href = `{{ route('teacher.training.show', ['id' => ':id']) }}`.replace(':id', id);
+            $('#trainingModal' + id).modal('show');
+        }
+
+        function toggleReportForm(id) {
+            $('#reportForm' + id).slideToggle();
+        }
+
+        function showRejectionForm(id) {
+            // Hide any other forms that might be open
+            $('.rejection-form').hide();
+            $('#reportForm' + id).hide();
+            
+            // Show the rejection form
+            $('#rejectionForm' + id).slideDown();
+            
+            // Scroll to the form
+            $('#rejectionForm' + id)[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function hideRejectionForm(id) {
+            $('#rejectionForm' + id).slideUp();
+        }
+
+        function submitReport(id) {
+            const formData = new FormData($('#trainingReportForm' + id)[0]);
+            
+            Swal.fire({
+                title: 'Submit Report',
+                text: 'Are you sure you want to submit this training report?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: 'var(--primary-color)',
+                cancelButtonColor: 'var(--secondary-color)',
+                confirmButtonText: 'Yes, submit report'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const reportUrl = `{{ route('teacher.training.upload-report', ['id' => ':id']) }}`.replace(':id', id);
+                    console.log('Report Upload URL:', reportUrl);
+                    
+                    $.ajax({
+                        url: reportUrl,
+                        type: 'POST',
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        success: function(response) {
+                            console.log('Report Upload Success:', response);
+                            Swal.fire({
+                                title: 'Success!',
+                                text: 'Report uploaded successfully!',
+                                icon: 'success',
+                                confirmButtonColor: 'var(--primary-color)'
+                            }).then(() => {
+                                $('#trainingModal' + id).modal('hide');
+                                location.reload();
+                            });
+                        },
+                        error: function(xhr) {
+                            console.error('Report Upload Error:', xhr.responseText);
+                            Swal.fire({
+                                title: 'Error!',
+                                text: 'Error uploading report. Please try again.',
+                                icon: 'error',
+                                confirmButtonColor: 'var(--primary-color)'
+                            });
+                        }
+                    });
+                }
+            });
+        }
+
+        function acceptTraining(id) {
+            if (!id) return;
+            Swal.fire({
+                title: 'Accept Training',
+                text: 'Are you sure you want to accept this training?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: 'var(--primary-color)',
+                cancelButtonColor: 'var(--secondary-color)',
+                confirmButtonText: 'Yes, accept training'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const acceptUrl = `{{ route('teacher.training.accept', ['id' => ':id']) }}`.replace(':id', id);
+                    console.log('Accept Training URL:', acceptUrl);
+                    
+                    $.ajax({
+                        url: acceptUrl,
+                        type: 'POST',
+                        data: {
+                            _token: '{{ csrf_token() }}'
+                        },
+                        success: function(response) {
+                            console.log('Accept Training Success:', response);
+                            Swal.fire({
+                                title: 'Success!',
+                                text: 'Training accepted successfully!',
+                                icon: 'success',
+                                confirmButtonColor: 'var(--primary-color)'
+                            }).then(() => {
+                                location.reload();
+                            });
+                        },
+                        error: function(xhr) {
+                            console.error('Accept Training Error:', xhr.responseText);
+                            Swal.fire({
+                                title: 'Error!',
+                                text: 'Error accepting training. Please try again.',
+                                icon: 'error',
+                                confirmButtonColor: 'var(--primary-color)'
+                            });
+                        }
+                    });
+                }
+            });
+        }
+
+        function confirmAttendance(id) {
+            if (!id) return;
+            Swal.fire({
+                title: 'Confirm Attendance',
+                text: 'Are you sure you want to confirm your attendance for this training?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: 'var(--primary-color)',
+                cancelButtonColor: 'var(--secondary-color)',
+                confirmButtonText: 'Yes, confirm attendance'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const confirmUrl = `{{ route('teacher.training.confirm-attendance', ['id' => ':id']) }}`.replace(':id', id);
+                    console.log('Confirm Attendance URL:', confirmUrl);
+                    
+                    $.ajax({
+                        url: confirmUrl,
+                        type: 'POST',
+                        data: {
+                            _token: '{{ csrf_token() }}'
+                        },
+                        success: function(response) {
+                            console.log('Confirm Attendance Success:', response);
+                            Swal.fire({
+                                title: 'Success!',
+                                text: 'Attendance confirmed successfully!',
+                                icon: 'success',
+                                confirmButtonColor: 'var(--primary-color)'
+                            }).then(() => {
+                                location.reload();
+                            });
+                        },
+                        error: function(xhr) {
+                            console.error('Confirm Attendance Error:', xhr.responseText);
+                            Swal.fire({
+                                title: 'Error!',
+                                text: 'Error confirming attendance. Please try again.',
+                                icon: 'error',
+                                confirmButtonColor: 'var(--primary-color)'
+                            });
+                        }
+                    });
+                }
+            });
+        }
+
+        function rejectTraining(id) {
+            const reason = $('#trainingRejectionForm' + id + ' textarea[name="reason"]').val();
+            if (!reason) {
+                Swal.fire({
+                    title: 'Error!',
+                    text: 'Please provide a reason for rejection.',
+                    icon: 'error',
+                    confirmButtonColor: 'var(--primary-color)'
+                });
+                return;
+            }
+
+            Swal.fire({
+                title: 'Reject Training',
+                text: 'Are you sure you want to reject this training?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: 'var(--danger-color)',
+                cancelButtonColor: 'var(--secondary-color)',
+                confirmButtonText: 'Yes, reject training'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const rejectUrl = `{{ route('teacher.training.reject', ['id' => ':id']) }}`.replace(':id', id);
+                    console.log('Reject Training URL:', rejectUrl);
+                    
+                    $.ajax({
+                        url: rejectUrl,
+                        type: 'POST',
+                        data: {
+                            _token: '{{ csrf_token() }}',
+                            reason: reason
+                        },
+                        success: function(response) {
+                            console.log('Reject Training Success:', response);
+                            Swal.fire({
+                                title: 'Success!',
+                                text: 'Training rejected successfully!',
+                                icon: 'success',
+                                confirmButtonColor: 'var(--primary-color)'
+                            }).then(() => {
+                                $('#trainingModal' + id).modal('hide');
+                                location.reload();
+                            });
+                        },
+                        error: function(xhr) {
+                            console.error('Reject Training Error:', xhr.responseText);
+                            Swal.fire({
+                                title: 'Error!',
+                                text: 'Error rejecting training. Please try again.',
+                                icon: 'error',
+                                confirmButtonColor: 'var(--primary-color)'
+                            });
+                        }
+                    });
+                }
+            });
         }
     </script>
 </body>

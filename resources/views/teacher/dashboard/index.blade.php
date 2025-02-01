@@ -343,7 +343,7 @@
                     </div>
                     <div class="profile-menu">
                         <a href="{{ route('teacher.dashboard') }}"><i class="fas fa-home text-prime"></i>Home</a>
-                        <a href="{{ route('teacher.training') }}"><i class="fas fa-certificate text-prime"></i>Training</a>
+                        <a href="{{ route('teacher.training.index') }}"><i class="fas fa-certificate"></i>Training</a>
                         <a href="{{ route('teacher.settings') }}"><i class="fas fa-cog text-prime"></i>Account settings</a>
                         <div class="divider"></div>
                         <form method="POST" action="{{ route('logout') }}" id="logout-form">

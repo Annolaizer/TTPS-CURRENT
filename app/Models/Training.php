@@ -151,6 +151,43 @@ class Training extends Model
     }
 
     /**
+     * Get the training teachers for this training.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function trainingTeachers()
+    {
+        return $this->hasMany(TrainingTeacher::class, 'training_id', 'training_id');
+    }
+
+    /**
+     * Get the teacher's participation status for this training.
+     *
+     * @param string|null $teacherId
+     * @return string
+     */
+    public function getTeacherParticipationStatus($teacherId = null)
+    {
+        if ($teacherId === null) {
+            $teacherId = auth()->user()->teacherProfile?->teacher_id;
+        }
+
+        if (!$teacherId) {
+            return 'Not Invited';
+        }
+
+        $trainingTeacher = $this->trainingTeachers()
+            ->where('teacher_id', $teacherId)
+            ->first();
+
+        if (!$trainingTeacher) {
+            return 'Not Invited';
+        }
+
+        return $trainingTeacher->participation_status;
+    }
+
+    /**
      * Scope a query to filter by status.
      */
     public function scopeByStatus($query, $status)
