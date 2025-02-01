@@ -13,6 +13,7 @@ use App\Http\Controllers\Organization\DashboardController as OrganizationDashboa
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\Teacher\DashboardController as TeacherDashboardController;
 use App\Http\Controllers\Teacher\SettingsController as TeacherSettingsController;
+use App\Http\Controllers\Teacher\TrainingController as TeacherTrainingController;
 use App\Http\Controllers\CpdFacilitator\DashboardController as CpdFacilitatorDashboardController;
 use App\Http\Controllers\CpdFacilitator\SettingsController as CpdFacilitatorSettingsController;
 use App\Http\Controllers\Organization\TrainingController as OrganizationTrainingController;
@@ -131,7 +132,8 @@ Route::middleware('auth')->group(function () {
             Route::get('/dashboard', [TeacherDashboardController::class, 'index'])->name('dashboard');
             Route::get('/profile', [TeacherDashboardController::class, 'profile'])->name('profile');
             Route::get('/profile/setup', [TeacherDashboardController::class, 'profileSetup'])->name('profile.setup');
-            Route::get('/training', [TeacherProfileController::class, 'index'])->name('training');
+            Route::get('/training', [TeacherTrainingController::class, 'index'])->name('training');
+            Route::get('/training/{id}', [TeacherTrainingController::class, 'show'])->name('training.show');
             Route::get('/settings', [TeacherSettingsController::class, 'index'])->name('settings');
             Route::get('/basic-info', function() {
                 return view('teacher.basic_info.index');
