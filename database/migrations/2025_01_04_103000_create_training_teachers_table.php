@@ -16,7 +16,42 @@ return new class extends Migration
             $table->foreignId('training_id')->constrained('trainings', 'training_id')->onDelete('cascade');
             $table->string('teacher_id', 36);
             $table->foreign('teacher_id')->references('teacher_id')->on('teacher_profiles')->onDelete('cascade');
-            $table->enum('status', ['active', 'inactive'])->default('active');
+            
+            // Comprehensive status tracking
+            $table->enum('status', [
+                'pending',      // Initial invitation state
+                'invited',      // Explicitly invited
+                'accepted',     // Teacher accepted the invitation
+                'rejected',     // Teacher rejected the invitation
+                'attended',     // Teacher attended the training
+                'partially_attended', // Teacher partially attended
+                'absent',       // Teacher did not attend
+                'completed',    // Training requirements fully met
+                'failed'        // Did not meet training requirements
+            ])->default('pending');
+
+            // Detailed tracking fields
+            $table->text('invitation_remarks')->nullable();
+            $table->text('rejection_reason')->nullable();
+            $table->text('attendance_remarks')->nullable();
+            
+            // Timestamps for various states
+            $table->timestamp('invited_at')->nullable();
+            $table->timestamp('accepted_at')->nullable();
+            $table->timestamp('rejected_at')->nullable();
+            $table->timestamp('attendance_date')->nullable();
+            $table->timestamp('completed_at')->nullable();
+            
+            // Report and evaluation fields
+            $table->string('report_path')->nullable();
+            $table->text('report_remarks')->nullable();
+            $table->timestamp('report_submitted_at')->nullable();
+            $table->boolean('report_approved')->nullable();
+            
+            // Performance and evaluation
+            $table->decimal('attendance_percentage', 5, 2)->nullable();
+            $table->decimal('performance_score', 5, 2)->nullable();
+            
             $table->timestamps();
             
             // Prevent duplicate assignments

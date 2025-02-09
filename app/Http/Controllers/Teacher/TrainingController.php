@@ -124,89 +124,62 @@ class TrainingController extends Controller
      */
     public function reject(Request $request, $id)
     {
+        \DB::beginTransaction();
         try {
+            // Validate rejection reason
             $validator = Validator::make($request->all(), [
                 'reason' => 'required|string|max:500'
             ]);
 
             if ($validator->fails()) {
-                Log::channel('training')->warning('Training Rejection Validation Failed', [
-                    'user_id' => Auth::id(),
-                    'training_id' => $id,
-                    'validation_errors' => $validator->errors()
-                ]);
-
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Validation failed',
-                    'errors' => $validator->errors()
-                ], 422);
+                throw new \Exception('Invalid rejection reason: ' . $validator->errors()->first());
             }
 
-            $request->validate([
-                'reason' => 'required|string|max:500'
+            // Find the teacher profile
+            $teacherProfile = TeacherProfile::where('user_id', Auth::id())->firstOrFail();
+
+            // Find the training
+            $training = Training::findOrFail($id);
+
+            // Find the training teacher record
+            $trainingTeacher = TrainingTeacher::where('training_id', $id)
+                ->where('teacher_id', $teacherProfile->teacher_id)
+                ->whereIn('status', ['pending', 'invited'])
+                ->firstOrFail();
+
+            // Update training teacher status
+            $trainingTeacher->update([
+                'status' => 'rejected',
+                'rejected_at' => now(),
+                'rejection_reason' => $request->reason
             ]);
 
-            $teacherProfile = TeacherProfile::where('user_id', Auth::id())->firstOrFail();
-            
-            // First try to find a pending training teacher record
-            $trainingTeacher = TrainingTeacher::where('training_id', $id)
-                                            ->where('teacher_id', $teacherProfile->teacher_id)
-                                            ->where('status', 'pending')
-                                            ->first();
+            // Log training rejection
+            Log::channel('training')->info('Training Invitation Rejected', [
+                'user_id' => Auth::id(),
+                'training_id' => $id,
+                'teacher_id' => $teacherProfile->teacher_id,
+                'rejection_reason' => $request->reason
+            ]);
 
-            if ($trainingTeacher) {
-                // Handle rejection of training invitation
-                $trainingTeacher->update([
-                    'status' => 'rejected',
-                    'rejection_reason' => $request->reason,
-                    'rejected_at' => now()
-                ]);
+            // Commit the transaction
+            \DB::commit();
 
-                // Log training invitation rejection
-                Log::channel('training')->info('Training Invitation Rejected', [
-                    'user_id' => Auth::id(),
-                    'training_id' => $id,
-                    'rejection_reason' => $request->reason
-                ]);
-            } else {
-                // Handle rejection of training request
-                $training = Training::findOrFail($id);
-                
-                if ($training->status !== 'pending') {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Only pending trainings can be rejected'
-                    ], 400);
-                }
-                
-                $training->update([
-                    'status' => 'rejected',
-                    'rejection_reason' => $request->reason,
-                    'rejected_at' => now(),
-                    'rejected_by' => Auth::id()
-                ]);
-
-                // Log training request rejection
-                Log::channel('training')->info('Training Request Rejected', [
-                    'user_id' => Auth::id(),
-                    'training_id' => $id,
-                    'rejection_reason' => $request->reason
-                ]);
-            }
-            
             return response()->json([
                 'success' => true,
-                'message' => 'Training rejected successfully'
+                'message' => 'Training invitation rejected successfully',
+                'status' => $trainingTeacher->status
             ]);
         } catch (\Exception $e) {
+            // Rollback the transaction
+            \DB::rollBack();
+
             // Log any errors during training rejection
             Log::channel('training')->error('Training Rejection Failed', [
                 'user_id' => Auth::id(),
                 'training_id' => $id,
                 'error_message' => $e->getMessage(),
-                'error_trace' => $e->getTraceAsString(),
-                'rejection_reason' => $request->input('reason')
+                'error_trace' => $e->getTraceAsString()
             ]);
 
             return response()->json([
@@ -298,97 +271,100 @@ class TrainingController extends Controller
      */
     public function uploadReport(Request $request, $id)
     {
+        \DB::beginTransaction();
         try {
-            // Log the start of report upload with more details
-            Log::channel('training')->info('Training Report Upload Initiated', [
-                'user_id' => Auth::id(),
-                'training_id' => $id,
-                'request_data' => $request->except(['_token', 'report_file']),
-                'request_method' => $request->method(),
-                'request_url' => $request->fullUrl()
-            ]);
-
+            // Validate report upload
             $validator = Validator::make($request->all(), [
-                'report_file' => 'required|file|mimes:pdf,doc,docx,txt|max:10240', // 10MB max
-                'remarks' => 'nullable|string|max:1000'
+                'report' => 'file|mimes:pdf,doc,docx|max:10240', // 10MB max
+                'report_file' => 'file|mimes:pdf,doc,docx|max:10240', // 10MB max
+                'report_remarks' => 'nullable|string|max:500'
             ]);
 
             if ($validator->fails()) {
-                Log::channel('training')->warning('Training Report Upload Validation Failed', [
-                    'user_id' => Auth::id(),
-                    'training_id' => $id,
-                    'validation_errors' => $validator->errors()
-                ]);
-
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Validation failed',
-                    'errors' => $validator->errors()
-                ], 422);
+                throw new \Exception('Invalid report upload: ' . $validator->errors()->first());
             }
 
+            // Find the teacher profile
             $teacherProfile = TeacherProfile::where('user_id', Auth::id())->firstOrFail();
-            
-            // Find the specific training
+
+            // Find the training teacher record
             $trainingTeacher = TrainingTeacher::where('training_id', $id)
-                                            ->where('teacher_id', $teacherProfile->teacher_id)
-                                            ->firstOrFail();
+                ->where('teacher_id', $teacherProfile->teacher_id)
+                ->whereIn('status', ['accepted', 'attended', 'partially_attended'])
+                ->firstOrFail();
+
+            // Determine which file input was used
+            $file = $request->file('report') ?? $request->file('report_file');
+            
+            if (!$file) {
+                throw new \Exception('No file uploaded');
+            }
 
             // Handle file upload
-            if ($request->hasFile('report_file')) {
-                $file = $request->file('report_file');
-                $filename = 'training_report_' . $id . '_' . time() . '.' . $file->getClientOriginalExtension();
-                $path = $file->storeAs('training_reports', $filename, 'public');
+            $reportPath = $file->store('training_reports', 'public');
 
-                // Update training teacher record with report details
-                $trainingTeacher->update([
-                    'report_path' => $path,
-                    'report_remarks' => $request->input('remarks', ''),
-                    'report_submitted_at' => now()
-                ]);
+            // Determine remarks
+            $remarks = $request->input('report_remarks') ?? '';
 
-                // Log successful report upload
-                Log::channel('training')->info('Training Report Uploaded Successfully', [
-                    'user_id' => Auth::id(),
-                    'training_id' => $id,
-                    'file_path' => $path,
-                    'file_size' => $file->getSize(),
-                    'file_mime' => $file->getMimeType()
-                ]);
+            // Update training teacher report details
+            $trainingTeacher->update([
+                'report_path' => $reportPath,
+                'report_remarks' => $remarks,
+                'report_submitted_at' => now(),
+                'report_approved' => null // Pending approval
+            ]);
 
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Report uploaded successfully',
-                    'file_path' => $path
-                ]);
-            }
+            // Log report upload
+            Log::channel('training')->info('Training Report Uploaded', [
+                'user_id' => Auth::id(),
+                'training_id' => $id,
+                'teacher_id' => $teacherProfile->teacher_id,
+                'report_path' => $reportPath,
+                'file_details' => [
+                    'original_name' => $file->getClientOriginalName(),
+                    'mime_type' => $file->getMimeType(),
+                    'size' => $file->getSize()
+                ]
+            ]);
 
-            throw new \Exception('No file uploaded');
+            // Commit the transaction
+            \DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Training report uploaded successfully',
+                'report_path' => $reportPath
+            ]);
         } catch (\Exception $e) {
+            // Rollback the transaction
+            \DB::rollBack();
+
             // Log any errors during report upload
             Log::channel('training')->error('Training Report Upload Failed', [
                 'user_id' => Auth::id(),
                 'training_id' => $id,
                 'error_message' => $e->getMessage(),
-                'error_trace' => $e->getTraceAsString(),
-                'request_data' => $request->except(['_token', 'report_file'])
+                'error_trace' => $e->getTraceAsString()
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to upload report: ' . $e->getMessage()
+                'message' => 'Failed to upload training report: ' . $e->getMessage()
             ], 500);
         }
     }
 
     /**
      * Accept a training invitation.
+     *
+     * @param int $id Training ID
+     * @return \Illuminate\Http\JsonResponse
      */
     public function accept($id)
     {
         \DB::beginTransaction();
         try {
-            // Log the start of training acceptance with more details
+            // Log the start of training acceptance
             Log::channel('training')->info('Training Acceptance Initiated', [
                 'user_id' => Auth::id(),
                 'training_id' => $id,
@@ -411,6 +387,11 @@ class TrainingController extends Controller
             // Find the training
             $training = Training::findOrFail($id);
 
+            // Check training status
+            if (!in_array($training->status, ['verified', 'pending'])) {
+                throw new \Exception('Training is not in an acceptable state.');
+            }
+
             // Find or create the training teacher record
             $trainingTeacher = TrainingTeacher::firstOrCreate(
                 [
@@ -425,24 +406,16 @@ class TrainingController extends Controller
                 ]
             );
 
-            // Check if the training teacher can be accepted
-            if (!$trainingTeacher->canAccept()) {
-                throw new \Exception('Training cannot be accepted at this time.');
+            // Validate current status
+            if (!in_array($trainingTeacher->status, ['pending', 'invited'])) {
+                throw new \Exception('Training invitation cannot be accepted at this time.');
             }
-
-            // Log the details of the training teacher record
-            Log::channel('training')->info('Training Teacher Record Details', [
-                'user_id' => Auth::id(),
-                'training_id' => $id,
-                'teacher_id' => $teacherProfile->teacher_id,
-                'existing_status' => $trainingTeacher->status,
-                'record_exists' => $trainingTeacher->wasRecentlyCreated ? 'Created' : 'Existing'
-            ]);
 
             // Update training teacher status
             $trainingTeacher->update([
-                'status' => 'active',
-                'accepted_at' => now()
+                'status' => 'accepted',
+                'accepted_at' => now(),
+                'invitation_remarks' => 'Accepted by teacher'
             ]);
 
             // Commit the transaction
@@ -459,7 +432,7 @@ class TrainingController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Training accepted successfully',
-                'participation_status' => $trainingTeacher->participation_status
+                'status' => $trainingTeacher->status
             ]);
         } catch (\Exception $e) {
             // Rollback the transaction
@@ -470,8 +443,7 @@ class TrainingController extends Controller
                 'user_id' => Auth::id(),
                 'training_id' => $id,
                 'error_message' => $e->getMessage(),
-                'error_trace' => $e->getTraceAsString(),
-                'user_details' => Auth::user()->toArray()
+                'error_trace' => $e->getTraceAsString()
             ]);
 
             return response()->json([

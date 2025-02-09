@@ -501,13 +501,31 @@
                             <form id="trainingReportForm{{ $training->training_id }}" enctype="multipart/form-data">
                                 @csrf
                                 <div class="mb-3">
-                                    <label for="report" class="form-label">Training Report (PDF only)</label>
-                                    <input type="file" class="form-control" name="report" accept=".pdf" required>
-                                    <small class="text-muted">Maximum file size: 10MB</small>
+                                    <label for="report{{ $training->training_id }}" class="form-label">Upload Training Report</label>
+                                    <input type="file" 
+                                           class="form-control" 
+                                           id="report{{ $training->training_id }}" 
+                                           name="report_file" 
+                                           accept=".pdf,.doc,.docx"
+                                           required>
                                 </div>
-                                <button type="button" class="btn" style="background-color: var(--primary-color); color: white;" onclick="submitReport('{{ $training->training_id }}')">
-                                    Submit Report
-                                </button>
+                                <div class="mb-3">
+                                    <label for="report_remarks{{ $training->training_id }}" class="form-label">Additional Remarks (Optional)</label>
+                                    <textarea 
+                                        class="form-control" 
+                                        id="report_remarks{{ $training->training_id }}" 
+                                        name="report_remarks" 
+                                        rows="3" 
+                                        placeholder="Enter any additional remarks about the training"
+                                        maxlength="500"></textarea>
+                                </div>
+                                <div class="text-end">
+                                    <button type="button" 
+                                            class="btn btn-primary" 
+                                            onclick="submitReport('{{ $training->training_id }}')">
+                                        Submit Report
+                                    </button>
+                                </div>
                             </form>
                         </div>
                     </div>
@@ -521,7 +539,7 @@
                                     <form id="trainingRejectionForm{{ $training->training_id }}">
                                         @csrf
                                         <div class="mb-3">
-                                            <textarea class="form-control" name="reason" rows="3" 
+                                            <textarea class="form-control" name="rejection_reason" rows="3" 
                                                     placeholder="Please provide a reason for rejecting this training..." required></textarea>
                                         </div>
                                         <div class="d-flex gap-2">
@@ -645,6 +663,7 @@
 
         function submitReport(id) {
             const formData = new FormData($('#trainingReportForm' + id)[0]);
+            const reportRemarks = formData.get('report_remarks');
             
             Swal.fire({
                 title: 'Submit Report',
@@ -658,6 +677,41 @@
                 if (result.isConfirmed) {
                     const reportUrl = `{{ route('teacher.training.upload-report', ['id' => ':id']) }}`.replace(':id', id);
                     console.log('Report Upload URL:', reportUrl);
+                    
+                    // Validate file
+                    const reportFile = formData.get('report_file');
+                    if (!reportFile || reportFile.size === 0) {
+                        Swal.fire({
+                            title: 'Error!',
+                            text: 'Please select a report file to upload.',
+                            icon: 'error',
+                            confirmButtonColor: 'var(--primary-color)'
+                        });
+                        return;
+                    }
+
+                    // Validate file type
+                    const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+                    if (!allowedTypes.includes(reportFile.type)) {
+                        Swal.fire({
+                            title: 'Error!',
+                            text: 'Please upload a PDF or Word document.',
+                            icon: 'error',
+                            confirmButtonColor: 'var(--primary-color)'
+                        });
+                        return;
+                    }
+
+                    // Validate file size (10MB)
+                    if (reportFile.size > 10 * 1024 * 1024) {
+                        Swal.fire({
+                            title: 'Error!',
+                            text: 'File size should not exceed 10MB.',
+                            icon: 'error',
+                            confirmButtonColor: 'var(--primary-color)'
+                        });
+                        return;
+                    }
                     
                     $.ajax({
                         url: reportUrl,
@@ -678,10 +732,20 @@
                             });
                         },
                         error: function(xhr) {
-                            console.error('Report Upload Error:', xhr.responseText);
+                            console.error('Report Upload Error:', xhr);
+                            let errorMessage = 'Error uploading report. Please try again.';
+                            
+                            // Try to parse more detailed error message
+                            try {
+                                const response = JSON.parse(xhr.responseText);
+                                if (response.message) {
+                                    errorMessage = response.message;
+                                }
+                            } catch(e) {}
+
                             Swal.fire({
                                 title: 'Error!',
-                                text: 'Error uploading report. Please try again.',
+                                text: errorMessage,
                                 icon: 'error',
                                 confirmButtonColor: 'var(--primary-color)'
                             });
@@ -784,7 +848,7 @@
         }
 
         function rejectTraining(id) {
-            const reason = $('#trainingRejectionForm' + id + ' textarea[name="reason"]').val();
+            const reason = $('#trainingRejectionForm' + id + ' textarea[name="rejection_reason"]').val();
             if (!reason) {
                 Swal.fire({
                     title: 'Error!',
