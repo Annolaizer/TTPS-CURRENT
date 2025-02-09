@@ -86,9 +86,28 @@ class ClearAndFixTrainingsTable extends Migration
         DB::table('training_subjects')->delete();
         DB::table('trainings')->delete();
 
-        // Restore backups
-        DB::statement('INSERT INTO trainings SELECT * FROM trainings_backup');
-        DB::statement('INSERT INTO training_subjects SELECT * FROM training_subjects_backup');
+        // Restore backups with explicit column mapping
+        DB::statement('
+            INSERT INTO trainings (
+                id, organization_id, training_type, title, description, 
+                start_date, end_date, status, venue, venue_name, 
+                ward_id, created_at, updated_at, verified_at, verified_by
+            )
+            SELECT 
+                id, organization_id, training_type, title, description, 
+                start_date, end_date, status, venue, venue_name, 
+                ward_id, created_at, updated_at, verified_at, verified_by
+            FROM trainings_backup
+        ');
+        
+        DB::statement('
+            INSERT INTO training_subjects (
+                training_id, subject_id, created_at, updated_at
+            )
+            SELECT 
+                training_id, subject_id, created_at, updated_at
+            FROM training_subjects_backup
+        ');
         
         // Drop backup tables
         DB::statement('DROP TABLE trainings_backup');
@@ -97,6 +116,7 @@ class ClearAndFixTrainingsTable extends Migration
         Schema::table('trainings', function (Blueprint $table) {
             $table->dropForeign(['region_id']);
             $table->dropForeign(['district_id']);
+            $table->dropColumn(['region_id', 'district_id']);
         });
     }
 }
