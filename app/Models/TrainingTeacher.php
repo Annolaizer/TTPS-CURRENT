@@ -92,11 +92,11 @@ class TrainingTeacher extends Model
     {
         return Attribute::make(
             get: function () {
-                if ($this->status === 'pending') {
+                if ($this->status === 'active') {
                     return 'Invitation Pending';
                 }
                 
-                if ($this->status === 'active') {
+                if ($this->status === 'accepted') {
                     if ($this->attendance_confirmed) {
                         return 'Attended';
                     }

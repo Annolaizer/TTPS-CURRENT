@@ -32,7 +32,7 @@ class TrainingController extends Controller
             ->join('training_teachers', 'trainings.training_id', '=', 'training_teachers.training_id')
             ->join('organizations', 'trainings.organization_id', '=', 'organizations.organization_id')
             ->where('training_teachers.teacher_id', $teacherProfile->teacher_id)
-            ->where('training_teachers.status', 'active');
+            ->whereIn('training_teachers.status', ['active', 'accepted', 'rejected']);
         
         // Apply filters
         if ($request->filled('status')) {
@@ -144,7 +144,7 @@ class TrainingController extends Controller
             // Find the training teacher record
             $trainingTeacher = TrainingTeacher::where('training_id', $id)
                 ->where('teacher_id', $teacherProfile->teacher_id)
-                ->whereIn('status', ['pending', 'invited'])
+                ->whereIn('status', ['pending', 'invited', 'active'])
                 ->firstOrFail();
 
             // Update training teacher status
@@ -388,15 +388,15 @@ class TrainingController extends Controller
             $training = Training::findOrFail($id);
 
             // Check training status
-            if (!in_array($training->status, ['verified', 'pending'])) {
+            if (!in_array($training->status, ['verified', 'pending', 'active'])) {
                 throw new \Exception('Training is not in an acceptable state.');
             }
 
             // Find or create the training teacher record
             $trainingTeacher = TrainingTeacher::firstOrCreate(
                 [
-                    'training_id' => $id,
-                    'teacher_id' => $teacherProfile->teacher_id
+                'training_id' => $id,
+                'teacher_id' => $teacherProfile->teacher_id
                 ],
                 [
                     'status' => 'pending',

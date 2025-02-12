@@ -369,12 +369,12 @@
                                                 $participationStatus = $training->getTeacherParticipationStatus();
                                                 
                                                 $statusClass = match($participationStatus) {
-                                                    'Invitation Pending' => 'bg-warning text-dark',
-                                                    'Accepted' => 'bg-info text-white',
+                                                    'Invitation Pending' => 'bg-warning text-white',
+                                                    'Accepted' => 'bg-primary text-white',
                                                     'Attended' => 'bg-success text-white',
                                                     'Rejected' => 'bg-danger text-white',
                                                     'Not Invited' => 'bg-secondary text-white',
-                                                    default => 'bg-light text-dark'
+                                                    default => 'bg-info text-white'
                                                 };
                                             @endphp
                                             <span class="badge {{ $statusClass }}">
@@ -382,11 +382,37 @@
                                             </span>
                                         </td>
                                         <td>
-                                            <button type="button" class="btn btn-primary btn-sm" 
-                                                    onclick="viewTrainingDetails('{{ $training->training_id }}')"
-                                                    title="View Details">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
+                                            <div class="d-flex gap-2">
+                                                <button type="button" class="btn btn-info btn-sm" 
+                                                        onclick="viewTrainingDetails('{{ $training->training_id }}')">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+
+                                                @if($training->status == 'verified' && !$training->attendance_confirmed)
+                                                    <button type="button" class="btn btn-success btn-sm" 
+                                                            onclick="confirmAttendance('{{ $training->training_id }}')">
+                                                        <i class="fas fa-check"></i>
+                                                    </button>
+                                                @endif
+
+                                                @if($training->status == 'pending')
+                                                    <button type="button" class="btn btn-success btn-sm" 
+                                                            onclick="acceptTraining('{{ $training->training_id }}')">
+                                                        <i class="fas fa-check"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-danger btn-sm" 
+                                                            onclick="showRejectionForm('{{ $training->training_id }}')">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                @endif
+
+                                                @if($training->status == 'completed' || ($training->end_date && \Carbon\Carbon::parse($training->end_date)->addDay()->isPast()))
+                                                    <button type="button" class="btn btn-primary btn-sm" 
+                                                            onclick="toggleReportForm('{{ $training->training_id }}')">
+                                                        <i class="fas fa-file-upload"></i>
+                                                    </button>
+                                                @endif
+                                            </div>
                                         </td>
                                     </tr>
                                     @endforeach
@@ -461,38 +487,7 @@
                         </div>
                     </div>
 
-                    <!-- Training Actions -->
-                    <div class="row mb-4">
-                        <div class="col-12">
-                            <h6 style="color: var(--primary-color);">Actions</h6>
-                            <div class="d-flex gap-2">
-                                @if($training->status == 'verified' && !$training->attendance_confirmed)
-                                    <button type="button" class="btn btn-success" 
-                                            onclick="confirmAttendance('{{ $training->training_id }}')">
-                                        <i class="fas fa-check"></i> Confirm Attendance
-                                    </button>
-                                @endif
 
-                                @if($training->status == 'completed' || ($training->end_date && \Carbon\Carbon::parse($training->end_date)->addDay()->isPast()))
-                                    <button type="button" class="btn btn-primary" 
-                                            onclick="toggleReportForm('{{ $training->training_id }}')">
-                                        <i class="fas fa-file-upload"></i> Upload Report
-                                    </button>
-                                @endif
-
-                                @if($training->status == 'pending')
-                                    <button type="button" class="btn btn-success" 
-                                            onclick="acceptTraining('{{ $training->training_id }}')">
-                                        <i class="fas fa-check"></i> Accept
-                                    </button>
-                                    <button type="button" class="btn btn-danger" 
-                                            onclick="showRejectionForm('{{ $training->training_id }}')">
-                                        <i class="fas fa-times"></i> Reject
-                                    </button>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
 
                     <!-- Report Upload Form (Initially Hidden) -->
                     <div class="row mb-4" id="reportForm{{ $training->training_id }}" style="display: none;">
