@@ -34,7 +34,7 @@ class SubjectsRegister extends Controller
         return response()->json([
             'error' => 'failed to add subject',
             'message' => 'System error'
-        ],200)
+        ],200);
 
         }catch(\Exception $e){
             Log::info('An Error Occured'.$e->getMessage());
