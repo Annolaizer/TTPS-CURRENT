@@ -23,11 +23,13 @@ use App\Http\Controllers\QualifiedFacilitatorsController;
 use App\Http\Controllers\TeacherProfileController;
 use App\Http\Controllers\CpdFacilitator\CPDFacilitatorTrainingController;
 use App\Http\Controllers\OrganizationTrainingAssignmentController;
+use App\Http\Controllers\SubjectsRegister;
 
 Route::get('/', function () {
     return view('home.index');
 })->name('home');
 
+Route::get('/subjects',[SubjectsRegister::class, 'index']);
 Route::get('/frequently-asked-questions', function () {
     return view('Faqs.index');
 })->name('faqs');

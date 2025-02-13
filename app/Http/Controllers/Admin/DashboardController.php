@@ -140,17 +140,17 @@ class DashboardController extends Controller
         // Get recent activities
         $recentActivities = [];
         $recentTeachers = DB::table('users')
-            ->join('personal_info', 'users.user_id', '=', 'personal_info.user_id')
+            ->leftJoin('personal_info', 'users.user_id', '=', 'personal_info.user_id')
             ->where('role', 'teacher')
             ->orderBy('users.created_at', 'desc')
             ->limit(5)
-            ->get(['personal_info.first_name', 'personal_info.last_name', 'users.created_at']);
+            ->get(['users.user_id', 'users.email', 'users.created_at']);
 
         foreach ($recentTeachers as $teacher) {
             $recentActivities[] = [
                 'type' => 'registration',
                 'title' => 'New Teacher Registration',
-                'name' => $teacher->first_name . ' ' . $teacher->last_name,
+                'name' => $teacher->email, // Using email as fallback
                 'time' => Carbon::parse($teacher->created_at)
             ];
         }
