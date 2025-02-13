@@ -10,14 +10,9 @@ class PersonalInfo extends Model
     use HasFactory;
 
     protected $table = 'personal_info';
-    protected $primaryKey = 'personal_info_id';
 
     protected $fillable = [
         'user_id',
-        'title',
-        'first_name',
-        'middle_name',
-        'last_name',
         'gender',
         'date_of_birth',
         'phone_number',

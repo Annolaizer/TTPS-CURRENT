@@ -14,6 +14,7 @@ use App\Http\Controllers\LocationController;
 use App\Http\Controllers\Teacher\DashboardController as TeacherDashboardController;
 use App\Http\Controllers\Teacher\SettingsController as TeacherSettingsController;
 use App\Http\Controllers\Teacher\TrainingController as TeacherTrainingController;
+use App\Http\Controllers\Teacher\TeacherProfileController as TeacherBasicInfoController;
 use App\Http\Controllers\CpdFacilitator\DashboardController as CpdFacilitatorDashboardController;
 use App\Http\Controllers\CpdFacilitator\SettingsController as CpdFacilitatorSettingsController;
 use App\Http\Controllers\Organization\TrainingController as OrganizationTrainingController;
@@ -130,8 +131,10 @@ Route::middleware('auth')->group(function () {
         ->name('teacher.')
         ->group(function () {
             Route::get('/dashboard', [TeacherDashboardController::class, 'index'])->name('dashboard');
-            Route::get('/profile', [TeacherDashboardController::class, 'profile'])->name('profile');
-            Route::get('/profile/setup', [TeacherDashboardController::class, 'profileSetup'])->name('profile.setup');
+            
+            // Profile routes
+            Route::get('/basic-info', [TeacherProfileController::class, 'index'])->name('basic_info');
+            Route::put('/profile/update', [TeacherProfileController::class, 'update'])->name('profile.update');
             
             // Ensure correct route is defined
             Route::get('/training', [TeacherTrainingController::class, 'index'])->name('training.index');

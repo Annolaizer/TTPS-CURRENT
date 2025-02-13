@@ -10,6 +10,21 @@ use Illuminate\Support\Facades\Log;
 
 class LocationController extends Controller
 {
+
+    public function getRegions()
+    {
+        try {
+            Log::info('Getting regions');
+            $regions = Region::select('region_id', 'region_name')
+                ->orderBy('region_name')
+                ->get();
+            Log::info('Regions fetched', ['count' => $regions->count()]);
+            return response()->json($regions);
+        } catch (\Exception $e) {
+            Log::error('Error getting regions', ['error' => $e->getMessage()]);
+            return response()->json(['error' => 'Failed to load regions'], 500);
+        }
+    }
     /**
      * Get districts for a region
      */

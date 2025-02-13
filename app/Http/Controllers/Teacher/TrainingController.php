@@ -275,9 +275,14 @@ class TrainingController extends Controller
         try {
             // Validate report upload
             $validator = Validator::make($request->all(), [
-                'report' => 'file|mimes:pdf,doc,docx|max:10240', // 10MB max
-                'report_file' => 'file|mimes:pdf,doc,docx|max:10240', // 10MB max
+                'report' => 'nullable|file|mimes:pdf,doc,docx|max:10240', // 10MB max
+                'report_file' => 'nullable|file|mimes:pdf,doc,docx|max:10240', // 10MB max
                 'report_remarks' => 'nullable|string|max:500'
+            ], [
+                'report.mimes' => 'The report must be a PDF, DOC, or DOCX file.',
+                'report.max' => 'The report must not be larger than 10MB.',
+                'report_file.mimes' => 'The report must be a PDF, DOC, or DOCX file.',
+                'report_file.max' => 'The report must not be larger than 10MB.'
             ]);
 
             if ($validator->fails()) {

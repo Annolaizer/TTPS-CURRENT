@@ -28,11 +28,16 @@ class TeacherProfile extends Model
         'ward_id'
     ];
 
+    protected $attributes = [
+        'status' => 'pending' // Default status when profile is created
+    ];
+
     protected $casts = [
         'teacher_id' => 'string',
         'user_id' => 'string',
         'years_of_experience' => 'integer',
         'ward_id' => 'integer',
+        'teaching_subjects' => 'array',
     ];
 
     public function user()

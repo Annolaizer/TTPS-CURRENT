@@ -31,8 +31,10 @@ class User extends Authenticatable
         'status',
         'last_login',
         'name',
-        'gender',
-        'phone_number'
+        'title',
+        'first_name',
+        'middle_name',
+        'last_name'
     ];
 
     /**
