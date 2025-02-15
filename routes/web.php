@@ -261,6 +261,14 @@ Route::prefix('admin')
         Route::get('/export-pdf', [ReportController::class, 'generatePDF'])->name('export-pdf');
         Route::get('/export-excel', [ReportController::class, 'exportExcel'])->name('export-excel');
     });
+
+    // Subjects routes
+    Route::prefix('subjects')->name('subjects.')->group(function (){
+        Route::get('/', [SubjectsRegister::class, 'index'])->name('index');
+        Route::post('/add-subject', [SubjectsRegister::class, 'create'])->name('create-subject');
+        Route::delete('delete-subject', [SubjectsRegister::class, 'delete'])->name('delete-subject');
+        Route::put('/update-subject', [SubjectsRegister::class, 'update'])->name('update-subject');
+    });
 });
 
 // Debug route to catch unmatched routes

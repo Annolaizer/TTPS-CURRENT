@@ -38,7 +38,7 @@ class TeacherProfileController extends Controller
             TeacherProfile::where('user_id', $user_id)->update([
                 'status' => 'completed',
                 'education_level' => $request->education_level,
-                'teaching_subject' => json_encode($request->teaching_subjects),
+                'teaching_subjects' => json_encode($request->teaching_subjects),
                 'years_of_experience' => $request->years_of_experience,
                 'current_school' => $request->school_name,
                 'ward_id' => $request->ward_id,
