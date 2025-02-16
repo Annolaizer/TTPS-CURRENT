@@ -15,7 +15,7 @@ return new class extends Migration
             $table->enum('type', ['Primary', 'Secondary', 'College', 'University']);
             $table->string('region');
             $table->string('district');
-            $table->foreignUuid('ward_id')->constrained('wards')->onDelete('restrict');
+            $table->unsignedBigInteger('ward_id');
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->timestamps();
         });

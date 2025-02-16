@@ -50,7 +50,7 @@
             </div>
             <div class="signup-prompt">
                 <span>Don't have an account? </span>
-                <a href="register_base.html">Create one now!</a>
+                <a href="{{route('register')}}">Create one now!</a>
             </div>
         </div>
     </div>
