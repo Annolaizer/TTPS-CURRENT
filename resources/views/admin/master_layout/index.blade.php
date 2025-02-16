@@ -180,6 +180,13 @@
                         </a>
                     </li>
 
+                    <li class="nav-item">
+                        <a href="{{ route('admin.subjects.index') }}" class="nav-link {{ request()->routeIs('admin.reports.index') ? 'active' : '' }}">
+                            <i class="fas fa-book-open"></i>
+                            <span>Subjects</span>
+                        </a>
+                    </li>
+
                     <li class="nav-item mt-auto">
                         <form action="{{ route('logout') }}" method="POST">
                             @csrf

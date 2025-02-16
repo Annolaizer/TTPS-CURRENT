@@ -48,6 +48,9 @@ class RegisterController extends Controller
                     'status' => 'pending',
                     'user_id' => (string) Str::uuid(),
                     'name' => $request->firstname . ' ' . $request->lastname,
+                    'first_name' => $request->firstname,
+                    'last_name' => $request->lastname,
+                    'middle_name' => $request->othername,
                 ];
                 
                 Log::info('Attempting to create user', ['email' => $userData['email'], 'role' => $userData['role']]);
@@ -60,13 +63,9 @@ class RegisterController extends Controller
                 
                 PersonalInfo::create([
                     'user_id' => $user->user_id,
-                    'title' => 'Mr', // Default, can be updated in profile
-                    'first_name' => $request->firstname,
-                    'middle_name' => $request->othername,
-                    'last_name' => $request->lastname,
                     'phone_number' => $request->telephone,
                     'gender' => 'male', // Default to male, can be updated in profile
-                    'date_of_birth' => now(), // Can be updated in profile
+                    'date_of_birth' => now()->format('Y-m-d'), // Can be updated in profile
                     'disability_status' => false // Default value
                 ]);
 
@@ -154,6 +153,9 @@ class RegisterController extends Controller
                     'status' => 'pending',
                     'user_id' => (string) Str::uuid(),
                     'name' => $request->firstname . ' ' . $request->lastname,
+                    'first_name' => $request->firstname,
+                    'last_name' => $request->lastname,
+                    'middle_name' => $request->othername,
                 ];
 
                 $user = User::create($userData);
@@ -175,13 +177,9 @@ class RegisterController extends Controller
                 // Finally create the personal info
                 PersonalInfo::create([
                     'user_id' => $user->user_id,
-                    'title' => 'Mr', // Default, can be updated in profile
-                    'first_name' => $request->firstname,
-                    'middle_name' => $request->othername,
-                    'last_name' => $request->lastname,
                     'phone_number' => $request->telephone,
                     'gender' => 'male', // Default to male, can be updated in profile
-                    'date_of_birth' => now(), // Can be updated in profile
+                    'date_of_birth' => now()->format('Y-m-d'), // Can be updated in profile
                     'disability_status' => false // Default value
                 ]);
 

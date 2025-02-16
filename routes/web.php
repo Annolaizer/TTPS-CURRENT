@@ -23,11 +23,13 @@ use App\Http\Controllers\QualifiedFacilitatorsController;
 use App\Http\Controllers\TeacherProfileController;
 use App\Http\Controllers\CpdFacilitator\CPDFacilitatorTrainingController;
 use App\Http\Controllers\OrganizationTrainingAssignmentController;
+use App\Http\Controllers\SubjectsRegister;
 
 Route::get('/', function () {
     return view('home.index');
 })->name('home');
 
+Route::get('/subjects',[SubjectsRegister::class, 'index']);
 Route::get('/frequently-asked-questions', function () {
     return view('Faqs.index');
 })->name('faqs');
@@ -258,6 +260,14 @@ Route::prefix('admin')
         Route::get('/', [ReportController::class, 'index'])->name('index');
         Route::get('/export-pdf', [ReportController::class, 'generatePDF'])->name('export-pdf');
         Route::get('/export-excel', [ReportController::class, 'exportExcel'])->name('export-excel');
+    });
+
+    // Subjects routes
+    Route::prefix('subjects')->name('subjects.')->group(function (){
+        Route::get('/', [SubjectsRegister::class, 'index'])->name('index');
+        Route::post('/add-subject', [SubjectsRegister::class, 'create'])->name('create-subject');
+        Route::delete('delete-subject', [SubjectsRegister::class, 'delete'])->name('delete-subject');
+        Route::put('/update-subject', [SubjectsRegister::class, 'update'])->name('update-subject');
     });
 });
 
