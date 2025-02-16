@@ -32,12 +32,10 @@ class AdminUsersSeeder extends Seeder
             PersonalInfo::firstOrCreate(
                 ['user_id' => $superAdmin->user_id],
                 [
-                    'title' => 'Mr',
-                    'first_name' => 'Super',
-                    'last_name' => 'Administrator',
                     'phone_number' => '0700000001',
                     'gender' => 'male',
-                    'date_of_birth' => now()
+                    'date_of_birth' => now(),
+                    'disability_status' => false
                 ]
             );
 
@@ -56,12 +54,10 @@ class AdminUsersSeeder extends Seeder
             PersonalInfo::firstOrCreate(
                 ['user_id' => $moestAdmin->user_id],
                 [
-                    'title' => 'Mr',
-                    'first_name' => 'MoEST',
-                    'last_name' => 'Administrator',
                     'phone_number' => '0700000002',
                     'gender' => 'male',
-                    'date_of_birth' => now()
+                    'date_of_birth' => now(),
+                    'disability_status' => false
                 ]
             );
         });
