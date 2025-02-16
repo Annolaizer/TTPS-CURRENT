@@ -344,9 +344,9 @@
                                 <select class="form-select" name="education_level" required>
                                     <option value="">Select Level</option>
                                     <option value="Pre Primary Education">Pre Primary Education</option>
-                                    <option value="Primary Education">Primary</option>
-                                    <option value="Lower Secondary Education">Lower Secondary</option>
-                                    <option value="Higher Secondary Education">Higher Secondary</option>
+                                    <option value="Primary Education">Primary Education</option>
+                                    <option value="Lower Secondary Education">Lower Secondary Education</option>
+                                    <option value="Upper Secondary Education">Upper Secondary Education</option>
                                 </select>
                                 <div class="invalid-feedback"></div>
                             </div>

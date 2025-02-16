@@ -19,12 +19,12 @@
                 <label class="form-label small">Education Level<span class="text-danger">*</span></label>
                 <select class="form-select form-select-sm" name="education_level" required>
                     <option value="">Select education level</option>
-                    <option value="Certificate" {{ (old('education_level', auth()->user()->teacherProfile->education_level ?? '') == 'Certificate') ? 'selected' : '' }}>Certificate</option>
-                    <option value="Diploma" {{ (old('education_level', auth()->user()->teacherProfile->education_level ?? '') == 'Diploma') ? 'selected' : '' }}>Diploma</option>
-                    <option value="Bachelor's Degree" {{ (old('education_level', auth()->user()->teacherProfile->education_level ?? '') == "Bachelor's Degree") ? 'selected' : '' }}>Bachelor's Degree</option>
-                    <option value="Master's Degree" {{ (old('education_level', auth()->user()->teacherProfile->education_level ?? '') == "Master's Degree") ? 'selected' : '' }}>Master's Degree</option>
-                    <option value="PhD" {{ (old('education_level', auth()->user()->teacherProfile->education_level ?? '') == 'PhD') ? 'selected' : '' }}>PhD</option>
+                    <option value="Pre Primary Education" {{ (old('education_level', auth()->user()->teacherProfile->education_level ?? '') == 'Pre Primary Education') ? 'selected' : '' }}>Pre Primary Education</option>
+                    <option value="Primary Education" {{ (old('education_level', auth()->user()->teacherProfile->education_level ?? '') == 'Primary Education') ? 'selected' : '' }}>Primary Education</option>
+                    <option value="Lower Secondary Education" {{ (old('education_level', auth()->user()->teacherProfile->education_level ?? '') == 'Lower Secondary Education') ? 'selected' : '' }}>Lower Secondary Education</option>
+                    <option value="Upper Secondary Education" {{ (old('education_level', auth()->user()->teacherProfile->education_level ?? '') == 'Upper Secondary Education') ? 'selected' : '' }}>Upper Secondary Education</option>
                 </select>
+
                 @error('education_level')
                     <div class="invalid-feedback d-block">{{ $message }}</div>
                 @enderror
