@@ -425,7 +425,7 @@
     <nav class="navbar">
         <div class="container">
             <a href="{{ route('teacher.dashboard') }}" class="navbar-brand">
-                <img src="{{ asset('asset/images/logo.png') }}" alt="Logo" class="logo">
+                <img src="{{ asset('asset/images/logo.png') }}" alt="Logo" class="logo" style="width: 50px;">
                 <span class="portal-name">Tanzania Teacher Portal</span>
             </a>
             <div class="user-profile">
@@ -441,7 +441,7 @@
                     </div>
                     <div class="profile-menu">
                         <a href="{{ route('teacher.dashboard') }}"><i class="fas fa-home text-prime"></i>Home</a>
-                        <a href="{{ route('teacher.training') }}"><i class="fas fa-certificate text-prime"></i>Training</a>
+                        <a href="{{ route('teacher.training.index') }}"><i class="fas fa-certificate text-prime"></i>Training</a>
                         <a href="#"><i class="fas fa-cog text-prime"></i>Account settings</a>
                         <div class="divider"></div>
                         <form method="POST" action="{{ route('logout') }}" id="logout-form">

@@ -44,7 +44,10 @@ class TrainingAssignmentController extends Controller
      */
     public function getAvailableTeachers(Request $request, $trainingCode)
     {
+        Log::info("annolaizer");
         $training = Training::where('training_code', $trainingCode)->firstOrFail();
+
+        Log::info('Training level: ' . $training->education_level);
 
         // Build query for teachers
         $query = TeacherProfile::where('education_level', $training->education_level)
