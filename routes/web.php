@@ -229,6 +229,9 @@ Route::prefix('admin')
     Route::prefix('trainings')->name('trainings.')->group(function () {
         Route::get('/', [TrainingController::class, 'index'])->name('index');
         Route::get('/data', [TrainingController::class, 'getTrainings'])->name('data');
+        Route::get('/create', function () {
+            return view('admin.trainings.index');
+        })->name('create-training');
         Route::post('/', [TrainingController::class, 'store'])->name('store');
         
         // Training verification routes
@@ -265,6 +268,7 @@ Route::prefix('admin')
     // Subjects routes
     Route::prefix('subjects')->name('subjects.')->group(function (){
         Route::get('/', [SubjectsRegister::class, 'index'])->name('index');
+        Route::get('/all-subjects', [SubjectsRegister::class, 'all'])->name('all');
         Route::post('/add-subject', [SubjectsRegister::class, 'create'])->name('create-subject');
         Route::delete('delete-subject', [SubjectsRegister::class, 'delete'])->name('delete-subject');
         Route::put('/update-subject', [SubjectsRegister::class, 'update'])->name('update-subject');

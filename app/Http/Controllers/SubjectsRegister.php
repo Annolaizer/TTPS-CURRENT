@@ -25,6 +25,23 @@ class SubjectsRegister extends Controller
         }
     }
 
+    public function all(){
+        try{
+            $subjects = Subject::all();
+            return response()->json([
+                'error' => false,
+                'message' => 'Subjects retrieved successfully',
+                'data' => $subjects
+            ], 200);
+        } catch(\Exception $e) {
+            Log::info('An Error Occured'.$e->getMessage());
+            return response()->json([
+                'error'=>$e->getMessage(),
+                'message'=>'failed to obtain Subjects Data'
+            ], 404);
+        }
+    }
+
     public function create(Request $request){
         try{
             // Validate the request

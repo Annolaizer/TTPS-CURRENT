@@ -10,6 +10,31 @@
     <link href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" rel="stylesheet">
     <style>
         a{text-decoration: none;}
+          /* Style for caret icon */
+          .caret-icon {
+            cursor: pointer;
+            font-size: 12px;
+            transition: transform 0.3s;
+        }
+        .rotate {
+            transform: rotate(90deg);
+        }
+        /* Compact table design */
+        table {
+            font-size: 0.8rem;
+        }
+        /* Smaller Action Icons */
+        .action-btn {
+            border: none;
+            background: transparent;
+            padding: 2px;
+            font-size: 12px;
+            color: #333;
+            transition: 0.3s;
+        }
+        .action-btn:hover {
+            color: #007bff;
+        }
     </style>
 @endpush
 
@@ -67,9 +92,11 @@
                     </div>
                     <div class="col-md-1">
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <button type="button" class="btn btn-add-training" data-bs-toggle="modal" data-bs-target="#training-modal">
+                            <a href="{{ route('admin.trainings.create-training') }}">
+                            <button type="button" class="btn btn-add-training">
                                 <i class="fas fa-plus"></i> Add
                             </button>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -83,6 +110,7 @@
                     <table id="trainings-table" class="table table-hover align-middle">
                         <thead class="table-light">
                             <tr>
+                                <th>-</th> <!-- Expand/Collapse Column -->
                                 <th>Training Code</th>
                                 <th>Title</th>
                                 <th>Organization</th>
@@ -133,7 +161,7 @@
                             <select class="form-select" name="education_level" required>
                                 <option value="">Select Level</option>
                                 <option value="Pre Primary Education">Pre Primary Education</option>
-                                <option value="Primary Education">Primary</option>
+                                <option value="Primary Education">Primary Education</option>
                                 <option value="Lower Secondary Education">Lower Secondary</option>
                                 <option value="Higher Secondary Education">Higher Secondary</option>
                             </select>
