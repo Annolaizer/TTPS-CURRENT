@@ -24,6 +24,7 @@ use App\Http\Controllers\TeacherProfileController;
 use App\Http\Controllers\CpdFacilitator\CPDFacilitatorTrainingController;
 use App\Http\Controllers\OrganizationTrainingAssignmentController;
 use App\Http\Controllers\SubjectsRegister;
+use App\Http\Controllers\Admin\ProgramController;
 
 Route::get('/', function () {
     return view('home.index');
@@ -184,6 +185,7 @@ Route::middleware('auth')->group(function () {
     });
 });
 
+
 // Admin routes
 Route::prefix('admin')
     ->name('admin.')
@@ -269,9 +271,18 @@ Route::prefix('admin')
     Route::prefix('subjects')->name('subjects.')->group(function (){
         Route::get('/', [SubjectsRegister::class, 'index'])->name('index');
         Route::get('/all-subjects', [SubjectsRegister::class, 'all'])->name('all');
-        Route::post('/add-subject', [SubjectsRegister::class, 'create'])->name('create-subject');
-        Route::delete('delete-subject', [SubjectsRegister::class, 'delete'])->name('delete-subject');
-        Route::put('/update-subject', [SubjectsRegister::class, 'update'])->name('update-subject');
+        Route::post('/add-subject', [SubjectsRegister::class, 'create'])->name('store');
+        Route::delete('delete-subject', [SubjectsRegister::class, 'delete'])->name('destroy');
+        Route::put('/update-subject', [SubjectsRegister::class, 'update'])->name('update');
+    });
+
+    // Programs routes
+    Route::prefix('programs')->name('programs.')->group(function () {
+        Route::get('/{subject_id}', [ProgramController::class, 'index'])->name('index');
+        Route::post('/', [ProgramController::class, 'create'])->name('store');
+        Route::put('/{program_id}', [ProgramController::class, 'update'])->name('update');
+        Route::delete('/{program_id}', [ProgramController::class, 'delete'])->name('delete');
+        Route::get('/subject/{subject_id}', [ProgramController::class, 'getBySubject'])->name('by.subject');
     });
 });
 

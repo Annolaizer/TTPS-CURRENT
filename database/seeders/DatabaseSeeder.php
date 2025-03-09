@@ -8,6 +8,7 @@ use Database\Seeders\AdminUsersSeeder;
 use Database\Seeders\TeacherSeeder;
 use Database\Seeders\CpdFacilitatorSeeder;
 use Database\Seeders\SubjectSeeder;
+use Database\Seeders\ProgramSeeder;
 use Database\Seeders\OrganizationSeeder;
 use Database\Seeders\TrainingSeeder;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -26,6 +27,7 @@ class DatabaseSeeder extends Seeder
             TeacherSeeder::class,
             CpdFacilitatorSeeder::class,
             SubjectSeeder::class,
+            ProgramSeeder::class,
             OrganizationSeeder::class,
             TrainingSeeder::class,
         ]);

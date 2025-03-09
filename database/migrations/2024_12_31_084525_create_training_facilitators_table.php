@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('user_id', 36);
             $table->foreign('user_id')->references('user_id')->on('users')->onDelete('cascade');
-            $table->foreignId('training_id')->constrained('trainings', 'training_id')->onDelete('cascade');
+            $table->foreignId('training_id')->constrained()->onDelete('cascade');
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->timestamps();
 

@@ -32,7 +32,7 @@ class AddRegionAndDistrictToTrainings extends Migration
         // Add foreign key constraints
         Schema::table('trainings', function (Blueprint $table) {
             // Add columns first
-            $table->unsignedBigInteger('region_id')->after('training_id');
+            $table->unsignedBigInteger('region_id')->after('organization_id');
             $table->unsignedBigInteger('district_id')->after('region_id');
 
             // Make sure columns are not nullable

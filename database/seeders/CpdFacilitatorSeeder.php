@@ -42,7 +42,9 @@ class CpdFacilitatorSeeder extends Seeder
         for ($i = 0; $i < 20; $i++) {
             $userId = (string) Str::uuid();
             $facilitatorId = (string) Str::uuid();
+            $title = fake()->randomElement(['Mr.', 'Mrs.', 'Ms.', 'Dr.', 'Prof.']);
             $firstName = fake()->firstName();
+            $middleName = fake()->optional(0.7)->firstName();
             $lastName = fake()->lastName();
             $now = Carbon::now();
 
@@ -50,7 +52,11 @@ class CpdFacilitatorSeeder extends Seeder
             DB::table('users')->insert([
                 'user_id' => $userId,
                 'email' => fake()->unique()->safeEmail(),
-                'name' => $firstName . ' ' . $lastName,
+                'name' => "$title $firstName $lastName",
+                'title' => $title,
+                'first_name' => $firstName,
+                'middle_name' => $middleName,
+                'last_name' => $lastName,
                 'password' => Hash::make('password123'), // Default password
                 'role' => 'cpd_facilitator',
                 'status' => fake()->randomElement(['active', 'inactive', 'pending']),
@@ -61,10 +67,6 @@ class CpdFacilitatorSeeder extends Seeder
             // Insert into personal_info table
             DB::table('personal_info')->insert([
                 'user_id' => $userId,
-                'title' => fake()->randomElement(['Mr.', 'Mrs.', 'Ms.', 'Dr.', 'Prof.']),
-                'first_name' => $firstName,
-                'middle_name' => fake()->optional(0.7)->firstName(),
-                'last_name' => $lastName,
                 'gender' => fake()->randomElement(['male', 'female']),
                 'date_of_birth' => fake()->dateTimeBetween('-60 years', '-25 years')->format('Y-m-d'),
                 'phone_number' => fake()->numerify('+255-###-###-###'),

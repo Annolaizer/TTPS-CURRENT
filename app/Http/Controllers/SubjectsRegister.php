@@ -5,151 +5,143 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Subject;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class SubjectsRegister extends Controller
 {
-    public function index(Request $request){
-        try{
-           $subjects = Subject::all();
-
-           Log::info('available Subjects'.$subjects);
-
-        return view('admin.subjects.index', ['subjects' => $subjects]);
-
-        }catch(\Exception $e){
-            Log::info('An Error Occured'.$e->getMessage());
-            return response()->json([
-                'error'=>$e->getMessage(),
-                'message'=>'failed to obtain Subjects Data'
-            ], 404);
+    public function index(Request $request)
+    {
+        try {
+            $subjects = Subject::orderBy('subject_name')->get();
+            return view('admin.subjects.index', ['subjects' => $subjects]);
+        } catch (\Exception $e) {
+            Log::error('Failed to fetch subjects: ' . $e->getMessage());
+            return back()->with('error', 'Failed to load subjects. Please try again.');
         }
     }
 
-    public function all(){
-        try{
-            $subjects = Subject::all();
+    public function all()
+    {
+        try {
+            $subjects = Subject::orderBy('subject_name')->get();
             return response()->json([
                 'error' => false,
-                'message' => 'Subjects retrieved successfully',
                 'data' => $subjects
-            ], 200);
-        } catch(\Exception $e) {
-            Log::info('An Error Occured'.$e->getMessage());
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to fetch subjects: ' . $e->getMessage());
             return response()->json([
-                'error'=>$e->getMessage(),
-                'message'=>'failed to obtain Subjects Data'
-            ], 404);
+                'error' => true,
+                'message' => 'Failed to fetch subjects. Please try again.'
+            ], 500);
         }
     }
 
-    public function create(Request $request){
-        try{
-            // Validate the request
-            $request->validate([
-                'subject_name' => 'required|string|max:255',
+    public function create(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'subject_name' => 'required|string|max:255|unique:subjects,subject_name'
             ]);
-    
-            // Get subject name from request
-            $subject_name = $request->input('subject_name');
-    
-            // Create the new subject
-            Subject::create([
-                'subject_name' => $subject_name,
-            ]);
-    
-            // Return success response
+
+            DB::beginTransaction();
+            
+            $subject = Subject::create($validated);
+            
+            DB::commit();
+
             return response()->json([
                 'error' => false,
-                'message' => 'Subject added successfully',
-            ], 200);
-
-        }catch(\Exception $e){
-            Log::info('An Error Occured'.$e->getMessage());
+                'message' => 'Subject created successfully',
+                'data' => $subject
+            ]);
+        } catch (ValidationException $e) {
             return response()->json([
-                'error'=>$e->getMessage(),
-                'message'=>'failed to create Subject'
-            ], 404);
+                'error' => true,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to create subject: ' . $e->getMessage());
+            
+            return response()->json([
+                'error' => true,
+                'message' => 'Failed to create subject. Please try again.'
+            ], 500);
         }
     }
 
-    public function delete(Request $request){
-        try{
-            // Validate the request
-            $request->validate([
-                'subject_id' => 'required|integer',
+    public function delete(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'id' => 'required|exists:subjects,subject_id'
             ]);
-    
-            // Get subject ID from request
-            $subject_id = $request->input('subject_id');
-    
-            // Find the subject
-            $subject = Subject::find($subject_id);
-    
-            // Check if the subject exists
-            if (!$subject) {
-                return response()->json([
-                    'error' => true,
-                    'message' => 'Subject not found',
-                ], 404);
-            }
-    
-            // Delete the subject
+
+            DB::beginTransaction();
+            
+            $subject = Subject::findOrFail($validated['id']);
             $subject->delete();
-    
-            // Return success response
+            
+            DB::commit();
+
             return response()->json([
                 'error' => false,
-                'message' => 'Subject deleted successfully',
-            ], 200);
-
-        }catch(\Exception $e){
-            Log::info('An Error Occured'.$e->getMessage());
+                'message' => 'Subject deleted successfully'
+            ]);
+        } catch (ValidationException $e) {
             return response()->json([
-                'error'=>$e->getMessage(),
-                'message'=>'failed to delete Subject'
-            ], 404);
+                'error' => true,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to delete subject: ' . $e->getMessage());
+            
+            return response()->json([
+                'error' => true,
+                'message' => 'Failed to delete subject. Please try again.'
+            ], 500);
         }
     }
 
-    public function update(Request $request){
-        try{
-            // Validate the request
-            $request->validate([
-                'subject_id' => 'required|integer',
-                'subject_name' => 'required|string|max:255',
+    public function update(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'id' => 'required|exists:subjects,subject_id',
+                'subject_name' => 'required|string|max:255|unique:subjects,subject_name,' . $request->id . ',subject_id'
             ]);
-    
-            // Get subject ID and name from request
-            $subject_id = $request->input('subject_id');
-            $subject_name = $request->input('subject_name');
-    
-            // Find the subject
-            $subject = Subject::find($subject_id);
-    
-            // Check if the subject exists
-            if (!$subject) {
-                return response()->json([
-                    'error' => true,
-                    'message' => 'Subject not found',
-                ], 404);
-            }
-    
-            // Update the subject
-            $subject->subject_name = $subject_name;
-            $subject->save();
-    
-            // Return success response
+
+            DB::beginTransaction();
+            
+            $subject = Subject::findOrFail($validated['id']);
+            $subject->update(['subject_name' => $validated['subject_name']]);
+            
+            DB::commit();
+
             return response()->json([
                 'error' => false,
                 'message' => 'Subject updated successfully',
-            ], 200);
-
-        }catch(\Exception $e){
-            Log::info('An Error Occured'.$e->getMessage());
+                'data' => $subject
+            ]);
+        } catch (ValidationException $e) {
             return response()->json([
-                'error'=>$e->getMessage(),
-                'message'=>'failed to update Subject'
-            ], 404);
+                'error' => true,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to update subject: ' . $e->getMessage());
+            
+            return response()->json([
+                'error' => true,
+                'message' => 'Failed to update subject. Please try again.'
+            ], 500);
         }
     }
 }

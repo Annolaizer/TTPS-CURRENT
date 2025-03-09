@@ -40,10 +40,19 @@ class TeacherSeeder extends Seeder
         for ($i = 0; $i < 100; $i++) {
             // Create user first
             $userId = (string) Str::uuid();
+            $gender = fake()->randomElement(['male', 'female']);
+            $title = fake()->randomElement($titles);
+            $firstName = fake()->firstName($gender);
+            $middleName = fake()->optional()->firstName($gender);
+            $lastName = fake()->lastName();
             
             DB::table('users')->insert([
                 'user_id' => $userId,
-                'name' => fake()->name(),
+                'name' => "$title $firstName $lastName",
+                'title' => $title,
+                'first_name' => $firstName,
+                'middle_name' => $middleName,
+                'last_name' => $lastName,
                 'email' => fake()->unique()->safeEmail(),
                 'password' => Hash::make('Teacher@2024'),
                 'role' => 'teacher',
@@ -51,9 +60,6 @@ class TeacherSeeder extends Seeder
                 'created_at' => $now,
                 'updated_at' => $now,
             ]);
-
-            // Determine gender
-            $gender = fake()->randomElement(['male', 'female']);
             
             // Determine disability status and type
             $hasDisability = fake()->boolean(10); // 10% chance of having a disability
@@ -62,10 +68,6 @@ class TeacherSeeder extends Seeder
             // Create personal info
             DB::table('personal_info')->insert([
                 'user_id' => $userId,
-                'title' => fake()->randomElement($titles),
-                'first_name' => fake()->firstName($gender),
-                'middle_name' => fake()->optional()->firstName($gender),
-                'last_name' => fake()->lastName(),
                 'gender' => $gender,
                 'date_of_birth' => fake()->dateTimeBetween('-60 years', '-25 years')->format('Y-m-d'),
                 'phone_number' => fake()->numerify('255#########'),
@@ -93,7 +95,7 @@ class TeacherSeeder extends Seeder
                 'user_id' => $userId,
                 'registration_number' => 'TTP' . str_pad($i + 1, 6, '0', STR_PAD_LEFT),
                 'education_level' => $level,
-                'teaching_subject' => fake()->randomElement($subjects),
+                'teaching_subjects' => fake()->randomElement($subjects),
                 'years_of_experience' => fake()->numberBetween(1, 30),
                 'current_school' => fake()->company() . ' School',
                 'ward_id' => fake()->randomElement($wardIds),

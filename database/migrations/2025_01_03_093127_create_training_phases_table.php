@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('training_phases', function (Blueprint $table) {
             $table->id('phase_id');
-            $table->foreignId('training_id')->constrained('trainings', 'training_id')->onDelete('cascade');
+            $table->foreignId('training_id')->constrained('trainings')->onDelete('cascade');
             $table->string('title');
             $table->text('description');
             $table->text('schedule');

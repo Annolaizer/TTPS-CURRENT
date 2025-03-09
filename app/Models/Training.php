@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Training extends Model
 {
-    protected $primaryKey = 'training_id';
+    protected $primaryKey = 'id';
     
     protected $fillable = [
         'training_code',
@@ -169,7 +169,7 @@ class Training extends Model
     public function getTeacherParticipationStatus($teacherId = null)
     {
         if ($teacherId === null) {
-            $teacherId = auth()->user()->teacherProfile?->teacher_id;
+            $teacherId = auth()->guard('teacher')->user()?->teacherProfile?->teacher_id;
         }
 
         if (!$teacherId) {

@@ -15,7 +15,7 @@ return new class extends Migration
             $table->uuid('enrollment_id')->primary();
             $table->uuid('teacher_id');
             $table->foreign('teacher_id')->references('teacher_id')->on('teacher_profiles')->onDelete('cascade');
-            $table->foreignId('training_id')->constrained('trainings', 'training_id');
+            $table->foreignId('training_id')->constrained()->onDelete('cascade');
             $table->enum('status', ['pending', 'approved', 'rejected', 'completed'])->default('pending');
             $table->text('rejection_reason')->nullable();
             $table->timestamps();

@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('trainings', function (Blueprint $table) {
-            $table->id('training_id');
+            $table->id();
             $table->string('training_code', 20)->unique();
             $table->foreignId('organization_id')->constrained('organizations', 'organization_id');
             $table->string('title', 255);
@@ -24,8 +24,7 @@ return new class extends Migration
             $table->date('end_date')->nullable();
             $table->enum('status', ['draft', 'pending', 'verified', 'rejected', 'completed'])->default('draft');
             $table->text('rejection_reason')->nullable();
-            $table->timestamp('created_at')->useCurrent();
-            $table->timestamp('updated_at')->useCurrent()->useCurrentOnUpdate();
+            $table->timestamps();
         });
     }
 

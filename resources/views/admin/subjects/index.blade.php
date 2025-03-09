@@ -103,12 +103,12 @@
                         </thead>
                         <tbody>
                             @foreach($subjects as $subject)
-                            <tr id="subjectRow{{ $subject->id }}">
+                            <tr id="subjectRow{{ $subject->subject_id }}">
                                 <td>{{ $subject->subject_id }}</td>
                                 <td style="text-align: left;">{{ $subject->subject_name }}</td>
                                 <td>
                                     <!-- Edit Button -->
-                                    <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editSubjectModal{{ $subject->id }}">
+                                    <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editSubjectModal{{ $subject->subject_id }}">
                                         <i class="fas fa-edit"></i>
                                     </button>
 
@@ -120,21 +120,25 @@
                             </tr>
 
                             <!-- Edit Subject Modal -->
-                            <div class="modal fade" id="editSubjectModal{{ $subject->id }}" tabindex="-1" aria-labelledby="editSubjectLabel" aria-hidden="true">
+                            <div class="modal fade" id="editSubjectModal{{ $subject->subject_id }}" tabindex="-1" aria-labelledby="editSubjectLabel" aria-hidden="true">
                                 <div class="modal-dialog">
                                     <div class="modal-content">
                                         <div class="modal-header">
                                             <h5 class="modal-title" id="editSubjectLabel">Edit Subject</h5>
                                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                         </div>
-                                        <form id="editForm{{ $subject->id }}">
+                                        <form id="editForm{{ $subject->subject_id }}">
                                             @csrf
                                             @method('PUT')
                                             <div class="modal-body">
-                                                <input type="hidden" name="id" value="{{ $subject->id }}">
+                                                <input type="hidden" name="subject_id" value="{{ $subject->subject_id }}">
                                                 <div class="mb-3">
                                                     <label for="subject_name" class="form-label">Subject Name</label>
                                                     <input type="text" name="subject_name" class="form-control" value="{{ $subject->subject_name }}" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="description" class="form-label">Description</label>
+                                                    <textarea name="description" class="form-control" rows="3">{{ $subject->description }}</textarea>
                                                 </div>
                                             </div>
                                             <div class="modal-footer">
@@ -167,6 +171,10 @@
                                 <label for="subject_name" class="form-label">Subject Name</label>
                                 <input type="text" name="subject_name" class="form-control" placeholder="Enter subject name" required>
                             </div>
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Description</label>
+                                <textarea name="description" class="form-control" rows="3" placeholder="Enter subject description"></textarea>
+                            </div>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -191,20 +199,43 @@
             paging: true,
             responsive: true
         });
+
+        // Setup CSRF token for all AJAX requests
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            }
+        });
     });
 
     // Add Subject
     function addSubject() {
         const form = $('#addForm');
+        const formData = new FormData(form[0]);
+
         $.ajax({
-            url: "{{ route('admin.subjects.create-subject') }}",
+            url: "{{ route('admin.subjects.store') }}",
             method: "POST",
-            data: form.serialize(),
+            data: formData,
+            processData: false,
+            contentType: false,
             success: function(response) {
-                Swal.fire('Success', 'Subject added successfully!', 'success').then(() => location.reload());
+                $('#addSubjectModal').modal('hide');
+                form[0].reset();
+                Swal.fire({
+                    title: 'Success!',
+                    text: 'Subject added successfully',
+                    icon: 'success'
+                }).then(() => {
+                    location.reload();
+                });
             },
-            error: function(error) {
-                Swal.fire('Error', 'Failed to add subject!', 'error');
+            error: function(xhr) {
+                Swal.fire({
+                    title: 'Error!',
+                    text: xhr.responseJSON.message || 'Something went wrong',
+                    icon: 'error'
+                });
             }
         });
     }
@@ -212,15 +243,31 @@
     // Update Subject
     function updateSubject(id) {
         const form = $(`#editForm${id}`);
+        const formData = new FormData(form[0]);
+        formData.append('_method', 'PUT'); // Add PUT method override
+
         $.ajax({
-            url: "{{ route('admin.subjects.update-subject') }}",
-            method: "PUT",
-            data: form.serialize(),
+            url: "{{ route('admin.subjects.update', '') }}/" + id,
+            method: "POST", // Use POST with _method: PUT for Laravel
+            data: formData,
+            processData: false,
+            contentType: false,
             success: function(response) {
-                Swal.fire('Success', 'Subject updated successfully!', 'success').then(() => location.reload());
+                $(`#editSubjectModal${id}`).modal('hide');
+                Swal.fire({
+                    title: 'Success!',
+                    text: 'Subject updated successfully',
+                    icon: 'success'
+                }).then(() => {
+                    location.reload();
+                });
             },
-            error: function(error) {
-                Swal.fire('Error', 'Failed to update subject!', 'error');
+            error: function(xhr) {
+                Swal.fire({
+                    title: 'Error!',
+                    text: xhr.responseJSON.message || 'Something went wrong',
+                    icon: 'error'
+                });
             }
         });
     }
@@ -229,7 +276,7 @@
     function confirmDelete(id) {
         Swal.fire({
             title: 'Are you sure?',
-            text: "You won't be able to revert this!",
+            text: "This action cannot be undone!",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
@@ -238,19 +285,26 @@
         }).then((result) => {
             if (result.isConfirmed) {
                 $.ajax({
-                    url: "{{ route('admin.subjects.delete-subject') }}",
-                    method: "DELETE",
+                    url: "{{ route('admin.subjects.destroy', '') }}/" + id,
+                    method: 'POST',
                     data: {
-                        id: id,
-                        _token: '{{ csrf_token() }}'
+                        _method: 'DELETE'
                     },
                     success: function(response) {
-                        Swal.fire('Deleted!', 'Subject has been deleted.', 'success').then(() => {
-                            $(`#subjectRow${id}`).remove();
+                        Swal.fire(
+                            'Deleted!',
+                            'Subject has been deleted.',
+                            'success'
+                        ).then(() => {
+                            location.reload();
                         });
                     },
-                    error: function(error) {
-                        Swal.fire('Error', 'Failed to delete subject!', 'error');
+                    error: function(xhr) {
+                        Swal.fire(
+                            'Error!',
+                            xhr.responseJSON.message || 'Something went wrong',
+                            'error'
+                        );
                     }
                 });
             }

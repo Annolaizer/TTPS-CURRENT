@@ -31,6 +31,8 @@ $(document).ready(function() {
         },
         columns: [
             {
+                data: null,
+                orderable: false,
                 render: function(){
                     return '<td class="text-center"><i class="fas fa-caret-right caret-icon"></i></td>';
                 }
@@ -76,7 +78,7 @@ $(document).ready(function() {
                 }
             }
         ],
-        order: [[0, 'desc']],
+        order: [[1, 'desc']],
         pageLength: 10,
         lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
         dom: "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +

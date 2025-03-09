@@ -21,7 +21,12 @@ class AdminUsersSeeder extends Seeder
             $superAdmin = User::firstOrCreate(
                 ['email' => 'superadmin@ttps.go.tz'],
                 [
+                    'user_id' => Str::uuid(),
                     'name' => 'Super Administrator',
+                    'title' => 'Mr.',
+                    'first_name' => 'Super',
+                    'middle_name' => null,
+                    'last_name' => 'Administrator',
                     'password' => Hash::make('SuperAdmin@2024'),
                     'role' => 'super_administrator',
                     'status' => 'active'
@@ -43,7 +48,12 @@ class AdminUsersSeeder extends Seeder
             $moestAdmin = User::firstOrCreate(
                 ['email' => 'moest@ttps.go.tz'],
                 [
+                    'user_id' => Str::uuid(),
                     'name' => 'MoEST Administrator',
+                    'title' => 'Mr.',
+                    'first_name' => 'MoEST',
+                    'middle_name' => null,
+                    'last_name' => 'Administrator',
                     'password' => Hash::make('MoEST@2024'),
                     'role' => 'admin',
                     'status' => 'active'

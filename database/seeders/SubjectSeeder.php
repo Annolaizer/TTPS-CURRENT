@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Subject;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class SubjectSeeder extends Seeder
 {
@@ -39,8 +40,18 @@ class SubjectSeeder extends Seeder
             'Vocational Skills'
         ];
 
-        foreach ($subjects as $subject) {
-            Subject::firstOrCreate(['subject_name' => $subject]);
+        DB::beginTransaction();
+        try {
+            foreach ($subjects as $subject) {
+                Subject::firstOrCreate(
+                    ['subject_name' => $subject],
+                    ['created_at' => now(), 'updated_at' => now()]
+                );
+            }
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
         }
     }
 }
