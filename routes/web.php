@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\TrainingController;
 use App\Http\Controllers\Admin\TrainingAssignmentController;
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\ProgramController;
 use App\Http\Controllers\Organization\DashboardController as OrganizationDashboardController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\Teacher\DashboardController as TeacherDashboardController;
@@ -23,8 +24,8 @@ use App\Http\Controllers\QualifiedFacilitatorsController;
 use App\Http\Controllers\TeacherProfileController;
 use App\Http\Controllers\CpdFacilitator\CPDFacilitatorTrainingController;
 use App\Http\Controllers\OrganizationTrainingAssignmentController;
+use App\Http\Controllers\Admin\SubjectsController;
 use App\Http\Controllers\SubjectsRegister;
-use App\Http\Controllers\Admin\ProgramController;
 
 Route::get('/', function () {
     return view('home.index');
@@ -185,106 +186,107 @@ Route::middleware('auth')->group(function () {
     });
 });
 
-
 // Admin routes
-Route::prefix('admin')
+Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
+    ->prefix('admin')
     ->name('admin.')
-    ->middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
     ->group(function () {
-    // Dashboard
-    Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
-    
-    // User Management routes
-    Route::prefix('users')->name('users.')->group(function () {
-        Route::get('/', [UserManagementController::class, 'index'])->name('index');
-        Route::get('/data', [UserManagementController::class, 'getUsers'])->name('data');
-        Route::get('/{userId}/edit', [UserManagementController::class, 'edit'])->name('edit');
-        Route::post('/', [UserManagementController::class, 'store'])->name('store');
-        Route::put('/{userId}', [UserManagementController::class, 'update'])->name('update');
-        Route::post('/{userId}/toggle-status', [UserManagementController::class, 'toggleStatus'])->name('toggle-status');
-        Route::delete('/{userId}', [UserManagementController::class, 'destroy'])->name('destroy');
-    });
-
-    // Institution routes
-    Route::get('/institutions', [InstitutionController::class, 'index'])->name('institutions.index');
-    Route::get('/institutions/create', [InstitutionController::class, 'create'])->name('institutions.create');
-    Route::post('/institutions', [InstitutionController::class, 'store'])->name('institutions.store');
-    Route::get('/institutions/{id}', [InstitutionController::class, 'show'])->name('institutions.show');
-    Route::match(['post', 'put'], '/institutions/{id}', [InstitutionController::class, 'update'])->name('institutions.update');
-    Route::post('/institutions/{id}/toggle-status', [InstitutionController::class, 'toggleStatus'])->name('institutions.toggle-status');
-    Route::delete('/institutions/{id}/approval-letter', [InstitutionController::class, 'deleteApprovalLetter'])->name('institutions.delete-approval-letter');
-    Route::get('/storage/{path}', function($path) {
-        return response()->file(storage_path('app/public/' . $path));
-    })->where('path', '.*');
-
-    // Teachers routes
-    Route::prefix('teachers')->name('teachers.')->group(function () {
-        Route::get('/', [AdminTeacherController::class, 'index'])->name('index');
-        Route::get('/{user_id}', [AdminTeacherController::class, 'show'])->name('show');
-        Route::get('/{user_id}/edit', [AdminTeacherController::class, 'edit'])->name('edit');
-        Route::put('/{user_id}', [AdminTeacherController::class, 'update'])->name('update');
-        Route::post('/{user_id}/toggle-status', [AdminTeacherController::class, 'toggleStatus'])->name('toggle-status');
-        Route::post('/verify-completed', [AdminTeacherController::class, 'verifyCompleted'])->name('verify-completed');
-    });
-
-    // Training routes
-    Route::prefix('trainings')->name('trainings.')->group(function () {
-        Route::get('/', [TrainingController::class, 'index'])->name('index');
-        Route::get('/data', [TrainingController::class, 'getTrainings'])->name('data');
-        Route::get('/create', function () {
-            return view('admin.trainings.index');
-        })->name('create-training');
-        Route::post('/', [TrainingController::class, 'store'])->name('store');
+        // Dashboard
+        Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
         
-        // Training verification routes
-        Route::put('/{trainingCode}/verify', [TrainingController::class, 'verify'])->name('verify');
-        Route::put('/{trainingCode}/reject', [TrainingController::class, 'reject'])->name('reject');
+        // Programs routes
+        Route::get('/programs', [ProgramController::class, 'index'])->name('programs.index');
+        Route::get('/programs/data', [ProgramController::class, 'getData'])->name('programs.data');
+        Route::post('/programs', [ProgramController::class, 'store'])->name('programs.store');
+        Route::post('/programs/bulk', [ProgramController::class, 'bulkStore'])->name('programs.bulk.store');
+        Route::get('/programs/{id}', [ProgramController::class, 'show'])->name('programs.show');
+        Route::put('/programs/{id}', [ProgramController::class, 'update'])->name('programs.update');
+        Route::delete('/programs/{id}', [ProgramController::class, 'destroy'])->name('programs.destroy');
         
-        Route::get('/{trainingCode}', [TrainingController::class, 'show'])->name('show');
-        Route::put('/{trainingCode}/update', [TrainingController::class, 'update'])->name('update');
-        Route::delete('/{trainingCode}', [TrainingController::class, 'destroy'])->name('destroy');
-        
-        // Training Assignment routes
-        Route::get('/{trainingCode}/assignment', [TrainingAssignmentController::class, 'show'])->name('assignment');
-        Route::get('/{trainingCode}/participants/data', [TrainingAssignmentController::class, 'getParticipants'])->name('participants.data');
-        Route::get('/{trainingCode}/participants/{participantId}/report', [TrainingAssignmentController::class, 'downloadReport'])->name('participants.report');
-        
-        Route::get('/{trainingCode}/available-teachers', [TrainingAssignmentController::class, 'getAvailableTeachers'])->name('teachers.available');
-        Route::get('/{trainingCode}/available-facilitators', [TrainingAssignmentController::class, 'getAvailableFacilitators'])->name('facilitators.available');
-        
-        Route::post('/{trainingCode}/assign-teachers', [TrainingAssignmentController::class, 'assignTeachers'])->name('teachers.assign');
-        Route::post('/{trainingCode}/assign-facilitators', [TrainingAssignmentController::class, 'assignFacilitators'])->name('facilitators.assign');
-        
-        Route::delete('/{trainingCode}/remove-teacher/{teacherId}', [TrainingAssignmentController::class, 'removeTeacher'])->name('teachers.remove');
-        Route::delete('/{trainingCode}/remove-facilitator/{facilitatorId}', [TrainingAssignmentController::class, 'removeFacilitator'])->name('facilitators.remove');
-        Route::get('/{training}/report', [TrainingController::class, 'generateReport'])->name('report');
-    });
+        // User Management routes
+        Route::prefix('users')->name('users.')->group(function () {
+            Route::get('/', [UserManagementController::class, 'index'])->name('index');
+            Route::get('/data', [UserManagementController::class, 'getUsers'])->name('data');
+            Route::get('/{userId}/edit', [UserManagementController::class, 'edit'])->name('edit');
+            Route::post('/', [UserManagementController::class, 'store'])->name('store');
+            Route::put('/{userId}', [UserManagementController::class, 'update'])->name('update');
+            Route::post('/{userId}/toggle-status', [UserManagementController::class, 'toggleStatus'])->name('toggle-status');
+            Route::delete('/{userId}', [UserManagementController::class, 'destroy'])->name('destroy');
+        });
 
-    // Reports routes
-    Route::prefix('reports')->name('reports.')->group(function () {
-        Route::get('/', [ReportController::class, 'index'])->name('index');
-        Route::get('/export-pdf', [ReportController::class, 'generatePDF'])->name('export-pdf');
-        Route::get('/export-excel', [ReportController::class, 'exportExcel'])->name('export-excel');
-    });
+        // Institution routes
+        Route::get('/institutions', [InstitutionController::class, 'index'])->name('institutions.index');
+        Route::get('/institutions/create', [InstitutionController::class, 'create'])->name('institutions.create');
+        Route::post('/institutions', [InstitutionController::class, 'store'])->name('institutions.store');
+        Route::get('/institutions/{id}', [InstitutionController::class, 'show'])->name('institutions.show');
+        Route::match(['post', 'put'], '/institutions/{id}', [InstitutionController::class, 'update'])->name('institutions.update');
+        Route::post('/institutions/{id}/toggle-status', [InstitutionController::class, 'toggleStatus'])->name('institutions.toggle-status');
+        Route::delete('/institutions/{id}/approval-letter', [InstitutionController::class, 'deleteApprovalLetter'])->name('institutions.delete-approval-letter');
+        Route::get('/storage/{path}', function($path) {
+            return response()->file(storage_path('app/public/' . $path));
+        })->where('path', '.*');
 
-    // Subjects routes
-    Route::prefix('subjects')->name('subjects.')->group(function (){
-        Route::get('/', [SubjectsRegister::class, 'index'])->name('index');
-        Route::get('/all-subjects', [SubjectsRegister::class, 'all'])->name('all');
-        Route::post('/add-subject', [SubjectsRegister::class, 'create'])->name('store');
-        Route::delete('delete-subject', [SubjectsRegister::class, 'delete'])->name('destroy');
-        Route::put('/update-subject', [SubjectsRegister::class, 'update'])->name('update');
-    });
+        // Teachers routes
+        Route::prefix('teachers')->name('teachers.')->group(function () {
+            Route::get('/', [AdminTeacherController::class, 'index'])->name('index');
+            Route::get('/{user_id}', [AdminTeacherController::class, 'show'])->name('show');
+            Route::get('/{user_id}/edit', [AdminTeacherController::class, 'edit'])->name('edit');
+            Route::put('/{user_id}', [AdminTeacherController::class, 'update'])->name('update');
+            Route::post('/{user_id}/toggle-status', [AdminTeacherController::class, 'toggleStatus'])->name('toggle-status');
+            Route::post('/verify-completed', [AdminTeacherController::class, 'verifyCompleted'])->name('verify-completed');
+        });
 
-    // Programs routes
-    Route::prefix('programs')->name('programs.')->group(function () {
-        Route::get('/{subject_id}', [ProgramController::class, 'index'])->name('index');
-        Route::post('/', [ProgramController::class, 'create'])->name('store');
-        Route::put('/{program_id}', [ProgramController::class, 'update'])->name('update');
-        Route::delete('/{program_id}', [ProgramController::class, 'delete'])->name('delete');
-        Route::get('/subject/{subject_id}', [ProgramController::class, 'getBySubject'])->name('by.subject');
+        // Training routes
+        Route::prefix('trainings')->name('trainings.')->group(function () {
+            Route::get('/', [TrainingController::class, 'index'])->name('index');
+            Route::get('/data', [TrainingController::class, 'getTrainings'])->name('data');
+            Route::get('/create', function () {
+                return view('admin.trainings.index');
+            })->name('create-training');
+            Route::post('/', [TrainingController::class, 'store'])->name('store');
+            
+            // Training verification routes
+            Route::put('/{trainingCode}/verify', [TrainingController::class, 'verify'])->name('verify');
+            Route::put('/{trainingCode}/reject', [TrainingController::class, 'reject'])->name('reject');
+            
+            Route::get('/{trainingCode}', [TrainingController::class, 'show'])->name('show');
+            Route::put('/{trainingCode}/update', [TrainingController::class, 'update'])->name('update');
+            Route::delete('/{trainingCode}', [TrainingController::class, 'destroy'])->name('destroy');
+            
+            // Training Assignment routes
+            Route::get('/{trainingCode}/assignment', [TrainingAssignmentController::class, 'show'])->name('assignment');
+            Route::get('/{trainingCode}/participants/data', [TrainingAssignmentController::class, 'getParticipants'])->name('participants.data');
+            Route::get('/{trainingCode}/participants/{participantId}/report', [TrainingAssignmentController::class, 'downloadReport'])->name('participants.report');
+            
+            Route::get('/{trainingCode}/available-teachers', [TrainingAssignmentController::class, 'getAvailableTeachers'])->name('teachers.available');
+            Route::get('/{trainingCode}/available-facilitators', [TrainingAssignmentController::class, 'getAvailableFacilitators'])->name('facilitators.available');
+            
+            Route::post('/{trainingCode}/assign-teachers', [TrainingAssignmentController::class, 'assignTeachers'])->name('teachers.assign');
+            Route::post('/{trainingCode}/assign-facilitators', [TrainingAssignmentController::class, 'assignFacilitators'])->name('facilitators.assign');
+            
+            Route::delete('/{trainingCode}/remove-teacher/{teacherId}', [TrainingAssignmentController::class, 'removeTeacher'])->name('teachers.remove');
+            Route::delete('/{trainingCode}/remove-facilitator/{facilitatorId}', [TrainingAssignmentController::class, 'removeFacilitator'])->name('facilitators.remove');
+            Route::get('/{training}/report', [TrainingController::class, 'generateReport'])->name('report');
+        });
+
+        // Subjects routes
+        Route::prefix('subjects')->name('subjects.')->group(function () {
+            Route::get('/', [SubjectsController::class, 'index'])->name('index');
+            Route::get('/data', [SubjectsController::class, 'getData'])->name('data');
+            Route::get('/all', [SubjectsController::class, 'all'])->name('all');
+            Route::post('/', [SubjectsController::class, 'store'])->name('store');
+            Route::get('/{id}', [SubjectsController::class, 'show'])->name('show');
+            Route::put('/{id}', [SubjectsController::class, 'update'])->name('update');
+            Route::delete('/{id}', [SubjectsController::class, 'destroy'])->name('destroy');
+        });
+
+        // Reports routes
+        Route::prefix('reports')->name('reports.')->group(function () {
+            Route::get('/', [ReportController::class, 'index'])->name('index');
+            Route::get('/export-pdf', [ReportController::class, 'generatePDF'])->name('export-pdf');
+            Route::get('/export-excel', [ReportController::class, 'exportExcel'])->name('export-excel');
+        });
     });
-});
 
 // Debug route to catch unmatched routes
 Route::fallback(function () {

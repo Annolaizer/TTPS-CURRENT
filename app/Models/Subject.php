@@ -16,6 +16,17 @@ class Subject extends Model
     ];
 
     /**
+     * The "booted" method of the model.
+     */
+    protected static function booted()
+    {
+        static::deleting(function ($subject) {
+            // Delete associated programs when a subject is deleted
+            $subject->programs()->delete();
+        });
+    }
+
+    /**
      * Get the trainings that include this subject.
      */
     public function trainings(): BelongsToMany

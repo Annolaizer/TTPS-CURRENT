@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Program extends Model
 {
-    protected $primaryKey = 'program_id';
+    protected $primaryKey = 'id';
     
     protected $fillable = [
         'program_name',

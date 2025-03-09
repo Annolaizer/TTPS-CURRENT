@@ -162,6 +162,30 @@
                     </li>
 
                     <li class="nav-item">
+                        <a href="#academicsSubmenu" class="nav-link {{ request()->routeIs('admin.subjects.*') || request()->routeIs('admin.programs.*') ? 'active' : '' }}" data-bs-toggle="collapse">
+                            <i class="fas fa-book"></i>
+                            <span>Academics</span>
+                            <i class="fas fa-chevron-down ms-auto"></i>
+                        </a>
+                        <div class="collapse {{ request()->routeIs('admin.subjects.*') || request()->routeIs('admin.programs.*') ? 'show' : '' }}" id="academicsSubmenu">
+                            <ul class="nav-list">
+                                <li class="nav-item">
+                                    <a href="{{ route('admin.subjects.index') }}" class="nav-link {{ request()->routeIs('admin.subjects.index') ? 'active' : '' }}">
+                                        <i class="fas fa-book-open"></i>
+                                        <span>Subjects</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="{{ route('admin.programs.index') }}" class="nav-link {{ request()->routeIs('admin.programs.*') ? 'active' : '' }}">
+                                        <i class="fas fa-graduation-cap"></i>
+                                        <span>Programs</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+
+                    <li class="nav-item">
                         <a href="#institutionsSubmenu" class="nav-link {{ request()->routeIs('admin.institutions.*') ? 'active' : '' }}" data-bs-toggle="collapse">
                             <i class="fas fa-university"></i>
                             <span>Institutions</span>
@@ -183,13 +207,6 @@
                         <a href="{{ route('admin.reports.index') }}" class="nav-link {{ request()->routeIs('admin.reports.index') ? 'active' : '' }}">
                             <i class="fas fa-chart-bar"></i>
                             <span>Reports & Analytics</span>
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a href="{{ route('admin.subjects.index') }}" class="nav-link {{ request()->routeIs('admin.reports.index') ? 'active' : '' }}">
-                            <i class="fas fa-book-open"></i>
-                            <span>Subjects</span>
                         </a>
                     </li>
 
